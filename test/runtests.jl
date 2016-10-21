@@ -26,3 +26,5 @@ assignment = [0  0  1  0  0  0  0  0  0  0;
 Z = munkres(A)
 
 @test find(Z.==maximum(Z)) == find(assignment)
+
+munkres(rand(500,500))

@@ -7,5 +7,10 @@
 
 Currently, the package only provides an implementation of the **[Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm)**(*Kuhn-Munkres algorithm*) based on its matrix interpretation. I also plan to implement a O(3) version.
 
+## Installation
+```julia
+Pkg.clone("https://github.com/Gnimuc/Hungarian.jl.git")
+```
+
 ## Reference
 J. Munkres, "Algorithms for the Assignment and Transportation Problems", Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.

@@ -24,23 +24,29 @@ function munkres{T<:Real}(input::Array{T,2})
     #  column its smallest entry."
     A .-= minimum(A, 1)
 
-    # "consider a zero Z of the matrix;"
-    Zs[find(A.==0)] = 1
-    # iterate over a sparse matrix
-    rows = rowvals(Zs)
-    for c = 1:columnLen, i in nzrange(Zs, c)
-        r = rows[i]
-        # "if there is no starred zero in its row and none in its column, star Z.
-        #  repeat, considering each zero in the matrix in turn;"
-        if !( any(Zs[r,:] .== 2) || any(Zs[:,c] .== 2) )
-            Zs[r,c] = 2
-            # "then cover every column containing a starred zero."
-            columnCovered[c] = true
+    for ii in CartesianRange(size(A))
+        # "consider a zero Z of the matrix;"
+        if A[ii] == 0
+            Zs[ii] = 1
+            # "if there is no starred zero in its row and none in its column, star Z.
+            #  repeat, considering each zero in the matrix in turn;"
+            r, c = ii.I
+            if !( any(Zs[r,:] .== 2) || any(Zs[:,c] .== 2) )
+                Zs[r,c] = 2
+                # "then cover every column containing a starred zero."
+                columnCovered[c] = true
+            end
         end
     end
 
-    # looping
+    # preliminaries done, go to step 1
     stepNum = 1
+
+    # if the assignment is already found, exist
+    if all(columnCovered)
+        stepNum = 0
+    end
+
     while stepNum != 0
         if stepNum == 1
             stepNum = step1!(Zs, rowCovered, columnCovered)
@@ -88,7 +94,7 @@ function step1!(Zs::SparseMatrixCSC{Int,Int},
                     return stepNum = 2
                 end
             else
-                # this zero is covered
+                # otherwise, this zero is covered
                 zeroCoveredNum += 1
             end
         end
@@ -158,14 +164,10 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
     end
 
     # "unstar each starred zero of the sequence;"
-    for i = 2:2:length(sequence)-1
-        Zs[sequence[i]] = 1
-    end
+    Zs[sequence[2:2:end-1]] = 1
 
     # "and star each primed zero of the sequence."
-    for i = 1:2:length(sequence)
-        Zs[sequence[i]] = 2
-    end
+    Zs[sequence[1:2:end]] = 2
 
     for c = 1:ZsDims[2], i in nzrange(Zs, c)
         r = rows[i]
@@ -198,10 +200,11 @@ function step3!{T<:Real}(A::Array{T,2},
                         )
     # step 3 (Step C)
     # "let h denote the smallest uncovered element of the matrix;"
-    h = minimum(A[find(!rowCovered),find(!columnCovered)])
+    uncoveredA = @view A[!rowCovered,!columnCovered]
+    h = minimum(uncoveredA)
 
     # use for-loops for better performance
-    for ii in CartesianRange(size(A))
+    @inbounds for ii in CartesianRange(size(A))
         # "add h to each covered row;"
         if rowCovered[ii[1]]
             A[ii] += h
@@ -210,12 +213,9 @@ function step3!{T<:Real}(A::Array{T,2},
         if !columnCovered[ii[2]]
             A[ii] -= h
         end
-    end
-
-    # mark new zeros in Zs
-    for i in eachindex(A)
-        if A[i] == 0 && Zs[i] == 0
-            Zs[i] = 1
+        # mark new zeros in Zs
+        if A[ii] == 0 && Zs[ii] == 0
+            Zs[ii] = 1
         end
     end
 
