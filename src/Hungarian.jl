@@ -1,5 +1,7 @@
 module Hungarian
 
-# package code goes here
+include("./Munkres.jl")
+
+export munkres
 
 end # module
