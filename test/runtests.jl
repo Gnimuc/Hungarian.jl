@@ -13,22 +13,26 @@ A = [ 92    99     1     8    15    67    74    51    58    40;
       10    12    94    96    78    35    37    44    46    53;
       11    18   100    77    84    36    43    50    27    59]
 
-assignment = [0  0  1  0  0  0  0  0  0  0;
-              0  0  0  0  1  0  0  0  0  0;
-              1  0  0  0  0  0  0  0  0  0;
-              0  0  0  0  0  0  0  0  0  1;
-              0  0  0  1  0  0  0  0  0  0;
-              0  0  0  0  0  0  0  1  0  0;
-              0  0  0  0  0  0  1  0  0  0;
-              0  0  0  0  0  1  0  0  0  0;
-              0  1  0  0  0  0  0  0  0  0;
-              0  0  0  0  0  0  0  0  1  0]
+assign, cost = hungarian(A)
+@test assign == [3, 5, 1, 10, 4, 8, 7, 6, 2, 9]
 
-Z = munkres(A)
-@test find(Z.==maximum(Z)) == find(assignment)
+B = [ 24     1     8;
+       5     7    14;
+       6    13    20;
+      12    19    21;
+      18    25     2]
 
-Z = munkres(ones(5,5) - eye(5))
-@test find(Z.==maximum(Z)) == find(eye(5))
+assign, cost = hungarian(B)
+@test assign == [2, 1, 0, 0, 3]
+@test cost == 8
+
+assign, cost = hungarian(B')
+@test assign == [2, 1, 5]
+@test cost == 8
+
+assign, cost = hungarian(ones(5,5) - eye(5))
+@test assign == [1, 2, 3, 4, 5]
+@test cost == 0
 
 # test for random examples
-@time munkres(rand(100,100))
+@time hungarian(rand(100,100))

@@ -1,4 +1,5 @@
 function munkres{T<:Real}(costMat::Array{T,2})
+    size(costMat,1) == size(costMat,2) || throw(ArgumentError("The input matrix of munkres algrithm should be square, got $(size(costMat))."))
     A = copy(costMat)
     # preliminaries
     # "no lines are covered;"
@@ -48,7 +49,6 @@ function munkres{T<:Real}(costMat::Array{T,2})
 
     while stepNum != 0
         if stepNum == 1
-            Z₀Ind = 
             stepNum = step1!(Zs, rowCovered, columnCovered)
         elseif stepNum == 2
             stepNum = step2!(Zs, rowCovered, columnCovered)
