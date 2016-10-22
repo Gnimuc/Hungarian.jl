@@ -1,6 +1,7 @@
 using Hungarian
 using Base.Test
 
+# test for simple examples
 A = [ 92    99     1     8    15    67    74    51    58    40;
       98    80     7    14    16    73    55    57    64    41;
        4    81    88    20    22    54    56    63    70    47;
@@ -24,7 +25,10 @@ assignment = [0  0  1  0  0  0  0  0  0  0;
               0  0  0  0  0  0  0  0  1  0]
 
 Z = munkres(A)
-
 @test find(Z.==maximum(Z)) == find(assignment)
 
-munkres(rand(100,100))
+Z = munkres(ones(5,5) - eye(5))
+@test find(Z.==maximum(Z)) == find(eye(5))
+
+# test for random examples
+@time munkres(rand(1000,1000))

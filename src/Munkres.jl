@@ -1,10 +1,9 @@
-function munkres{T<:Real}(input::Array{T,2})
-    A = copy(input)
-    rowLen, columnLen = size(A)
+function munkres{T<:Real}(costMat::Array{T,2})
+    A = copy(costMat)
     # preliminaries
     # "no lines are covered;"
-    rowCovered = falses(rowLen)
-    columnCovered = falses(columnLen)
+    rowCovered = falses(size(A,1))
+    columnCovered = falses(size(A,2))
 
     # "no zeros are starred or primed."
     # we can use a sparse matrix Zs to store these three kinds of markers:
@@ -12,7 +11,7 @@ function munkres{T<:Real}(input::Array{T,2})
     # 2 => starred zero
     # 3 => primed zero
     # (TODO: use @enum instead of hard-coded integer)
-    Zs = spzeros(Int, rowLen, columnLen)
+    Zs = spzeros(Int, size(A)...)
 
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
@@ -64,7 +63,7 @@ function step1!(Zs::SparseMatrixCSC{Int,Int},
                 rowCovered::BitArray{1},
                 columnCovered::BitArray{1}
                )
-    columnLen = size(Zs)[2]
+    columnLen = size(Zs,2)
     rows = rowvals(Zs)
     # step 1
     zeroCoveredNum = 0
@@ -200,23 +199,43 @@ function step3!{T<:Real}(A::Array{T,2},
                         )
     # step 3 (Step C)
     # "let h denote the smallest uncovered element of the matrix;"
-    uncoveredA = @view A[!rowCovered,!columnCovered]
-    h = minimum(uncoveredA)
+    # find h and track the location of those new zeros
+    # inspired by @PaulBellette's method at the link below, all credits to him
+    # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
+    h = typemax(T)
+    uncoveredRowInds = find(!rowCovered)
+    uncoveredColumnInds = find(!columnCovered)
+    minLocations = Int[]
+    for j in uncoveredColumnInds, i in uncoveredRowInds
+        @inbounds cost = A[i,j]
+        if cost < h
+            h = cost
+            empty!(minLocations)
+            push!(minLocations, i, j)
+        elseif cost == h
+            push!(minLocations, i, j)
+        end
+    end
+    # mark new zeros in Zs
+    for i = 1:2:length(minLocations)
+        Zs[minLocations[i], minLocations[i+1]] = 1
+    end
+
+    # # "add h to each covered row;"
+    # A[rowCovered,:] += h
+    # # "then subtract h from each uncovered column."
+    # A[:,!columnCovered] -= h
 
     # use for-loops for better performance
-    @inbounds for ii in CartesianRange(size(A))
-        # "add h to each covered row;"
-        if rowCovered[ii[1]]
-            A[ii] += h
-        end
-        # "then subtract h from each uncovered column."
-        if !columnCovered[ii[2]]
-            A[ii] -= h
-        end
-        # mark new zeros in Zs
-        if A[ii] == 0 && Zs[ii] == 0
-            Zs[ii] = 1
-        end
+    # "add h to each covered row;"
+    coveredRowInds = find(rowCovered)
+    for j = 1:size(A,2), i in coveredRowInds
+        @inbounds A[i,j] += h
+    end
+
+    # "then subtract h from each uncovered column."
+    for j in uncoveredColumnInds, i = 1:size(A,1)
+        @inbounds A[i,j] -= h
     end
 
     # "return to step 1."
