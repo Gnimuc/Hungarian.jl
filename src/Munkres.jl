@@ -7,11 +7,11 @@ function munkres{T<:Real}(costMat::Array{T,2})
 
     # "no zeros are starred or primed."
     # we can use a sparse matrix Zs to store these three kinds of markers:
-    # 1 => ordinary zero
-    # 2 => starred zero
-    # 3 => primed zero
-    # (TODO: use @enum instead of hard-coded integer)
-    Zs = spzeros(Int, size(A)...)
+    # 0 => N     => Non-zero
+    # 1 => ZERO  => ordinary zero
+    # 2 => STAR  => starred zero
+    # 3 => PRIME => primed zero
+    Zs = spzeros(MARK, size(A)...)
 
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
@@ -26,12 +26,12 @@ function munkres{T<:Real}(costMat::Array{T,2})
     for ii in CartesianRange(size(A))
         # "consider a zero Z of the matrix;"
         if A[ii] == 0
-            Zs[ii] = 1
+            Zs[ii] = ZERO
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
             r, c = ii.I
-            if !( any(Zs[r,:] .== 2) || any(Zs[:,c] .== 2) )
-                Zs[r,c] = 2
+            if !( any(Zs[r,:] .== STAR) || any(Zs[:,c] .== STAR) )
+                Zs[r,c] = STAR
                 # "then cover every column containing a starred zero."
                 columnCovered[c] = true
             end
@@ -48,6 +48,7 @@ function munkres{T<:Real}(costMat::Array{T,2})
 
     while stepNum != 0
         if stepNum == 1
+            Z₀Ind = 
             stepNum = step1!(Zs, rowCovered, columnCovered)
         elseif stepNum == 2
             stepNum = step2!(Zs, rowCovered, columnCovered)
@@ -59,7 +60,7 @@ function munkres{T<:Real}(costMat::Array{T,2})
     return Zs
 end
 
-function step1!(Zs::SparseMatrixCSC{Int,Int},
+function step1!(Zs::SparseMatrixCSC{MARK,Int},
                 rowCovered::BitArray{1},
                 columnCovered::BitArray{1}
                )
@@ -74,11 +75,11 @@ function step1!(Zs::SparseMatrixCSC{Int,Int},
             r = rows[i]
             # "choose a non-covered zero and prime it, consider the row containing it."
             if columnCovered[c] == false && rowCovered[r] == false
-                Zs[r,c] = 3
+                Zs[r,c] = PRIME
                 # "if there is a starred zero Z in this row"
                 columnZ = 0
                 for zc = 1:columnLen
-                    if Zs[r,zc] == 2
+                    if Zs[r,zc] == STAR
                         columnZ = zc
                         break
                     end
@@ -102,7 +103,7 @@ function step1!(Zs::SparseMatrixCSC{Int,Int},
     return stepNum = 3
 end
 
-function step2!(Zs::SparseMatrixCSC{Int,Int},
+function step2!(Zs::SparseMatrixCSC{MARK,Int},
                 rowCovered::BitArray{1},
                 columnCovered::BitArray{1}
                )
@@ -117,14 +118,14 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
     for c = 1:ZsDims[2], i in nzrange(Zs, c)
         r = rows[i]
         # note that Z₀ is an **uncovered** 0′
-        if Zs[r,c] == 3 && columnCovered[c] == false && rowCovered[r] == false
+        if Zs[r,c] == PRIME && columnCovered[c] == false && rowCovered[r] == false
             # push Z₀(uncovered 0′) into the sequence
             push!(sequence, sub2ind(ZsDims, r, c))
             # "let Z₁ denote the 0* in the Z₀'s column.(if any)"
             # find 0* in Z₀'s column
             for j in nzrange(Zs, c)
                 Z₁r = rows[j]
-                if Zs[Z₁r, c] == 2
+                if Zs[Z₁r, c] == STAR
                     # push Z₁(0*) into the sequence
                     push!(sequence, sub2ind(ZsDims, Z₁r, c))
                     # set sequence continue flag => true
@@ -143,13 +144,13 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
         r = ind2sub(ZsDims, sequence[end])[1]
         # find Z₂ in Z₃'s row
         for c = 1:ZsDims[2]
-            if Zs[r,c] == 3
+            if Zs[r,c] == PRIME
                 # push Z₂ into the sequence
                 push!(sequence, sub2ind(ZsDims, r, c))
                 # find 0* in Z₂'s column
                 for j in nzrange(Zs, c)
                     Z₃r = rows[j]
-                    if Zs[Z₃r, c] == 2
+                    if Zs[Z₃r, c] == STAR
                         # push Z₃(0*) into the sequence
                         push!(sequence, sub2ind(ZsDims, Z₃r, c))
                         # set sequence continue flag => true
@@ -163,19 +164,19 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
     end
 
     # "unstar each starred zero of the sequence;"
-    Zs[sequence[2:2:end-1]] = 1
+    Zs[sequence[2:2:end-1]] = ZERO
 
     # "and star each primed zero of the sequence."
-    Zs[sequence[1:2:end]] = 2
+    Zs[sequence[1:2:end]] = STAR
 
     for c = 1:ZsDims[2], i in nzrange(Zs, c)
         r = rows[i]
         # "erase all primes;"
-        if Zs[r,c] == 3
-            Zs[r,c] = 1
+        if Zs[r,c] == PRIME
+            Zs[r,c] = ZERO
         end
         # "and cover every column containing a 0*."
-        if Zs[r,c] == 2
+        if Zs[r,c] == STAR
             columnCovered[c] = true
         end
     end
@@ -193,7 +194,7 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
 end
 
 function step3!{T<:Real}(A::Array{T,2},
-                         Zs::SparseMatrixCSC{Int,Int},
+                         Zs::SparseMatrixCSC{MARK,Int},
                          rowCovered::BitArray{1},
                          columnCovered::BitArray{1}
                         )
@@ -218,7 +219,7 @@ function step3!{T<:Real}(A::Array{T,2},
     end
     # mark new zeros in Zs
     for i = 1:2:length(minLocations)
-        Zs[minLocations[i], minLocations[i+1]] = 1
+        Zs[minLocations[i], minLocations[i+1]] = ZERO
     end
 
     # # "add h to each covered row;"

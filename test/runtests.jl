@@ -31,4 +31,4 @@ Z = munkres(ones(5,5) - eye(5))
 @test find(Z.==maximum(Z)) == find(eye(5))
 
 # test for random examples
-@time munkres(rand(1000,1000))
+@time munkres(rand(100,100))
