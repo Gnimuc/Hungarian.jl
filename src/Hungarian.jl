@@ -21,8 +21,9 @@ the ``N x M`` matrix `costMat`. Return the optimal column indices and
 corresponding minimal cost.
 
 The `costMat[n,m]` denotes the cost to assign the `n`th job to the `m`th worker.
-Note that, when dealing with "partial assignment" problems, the zero element in
-the return value `assignment` means there is no matching job for that worker.
+Note that, when dealing with "partial assignment" problems(`n>m`), the zero element
+in the return value `assignment` means that these tasks are not assigned, becase there
+are not enough workers.
 
 # Examples
 ```julia
