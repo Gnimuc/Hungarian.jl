@@ -2,19 +2,14 @@ using Hungarian
 using Base.Test
 
 # test for simple examples
-A = [ 92    99     1     8    15    67    74    51    58    40;
-      98    80     7    14    16    73    55    57    64    41;
-       4    81    88    20    22    54    56    63    70    47;
-      85    87    19    21     3    60    62    69    71    28;
-      86    93    25     2     9    61    68    75    52    34;
-      17    24    76    83    90    42    49    26    33    65;
-      23     5    82    89    91    48    30    32    39    66;
-      79     6    13    95    97    29    31    38    45    72;
-      10    12    94    96    78    35    37    44    46    53;
-      11    18   100    77    84    36    43    50    27    59]
+A = [ 0.891171  0.0320582   0.564188  0.8999    0.620615;
+      0.166402  0.861136    0.201398  0.911772  0.0796335;
+      0.77272   0.782759    0.905982  0.800239  0.297333;
+      0.561423  0.170607    0.615941  0.960503  0.981906;
+      0.748248  0.00799335  0.554215  0.745299  0.42637]
 
 assign, cost = hungarian(A)
-@test assign == [3, 5, 1, 10, 4, 8, 7, 6, 2, 9]
+@test assign == [2, 3, 5, 1, 4]
 
 B = [ 24     1     8;
        5     7    14;
@@ -34,5 +29,27 @@ assign, cost = hungarian(ones(5,5) - eye(5))
 @test assign == [1, 2, 3, 4, 5]
 @test cost == 0
 
-# test for random examples
-@time hungarian(rand(100,100))
+# test for random examples with Munkres.jl
+if Pkg.installed("Munkres") != nothing
+    using Munkres
+
+    A = rand(300,300)
+    assignH, costH = hungarian(A)
+    assignM = munkres(A)
+
+    for i = 1:100
+        A = rand(50,50)
+        assignH, costH = hungarian(A)
+        assignM = munkres(A)
+
+        costM = 0
+        for i in zip(1:size(A,1), assignM)
+            if i[2] != 0
+                costM += A[i...]
+            end
+        end
+
+        @test assignH == assignM
+        @test costH == costM
+    end
+end

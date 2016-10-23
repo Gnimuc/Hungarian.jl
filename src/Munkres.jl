@@ -1,18 +1,46 @@
+"""
+    munkres(costMat)
+
+Find an optimal solution of the assignment problem represented by the square
+matrix `costMat`. Return an sparse matrix illustrating the optimal matching.
+
+# Examples
+
+```julia
+julia> costMat = ones(3,3)-eye(3,3)
+3×3 Array{Float64,2}:
+ 0.0  1.0  1.0
+ 1.0  0.0  1.0
+ 1.0  1.0  0.0
+
+julia> matching = Hungarian.munkres(costMat)
+3×3 sparse matrix with 3 Int64 nonzero entries:
+	[1, 1]  =  2
+	[2, 2]  =  2
+	[3, 3]  =  2
+
+julia> full(matching)
+3×3 Array{Int64,2}:
+ 2  0  0
+ 0  2  0
+ 0  0  2
+```
+"""
 function munkres{T<:Real}(costMat::Array{T,2})
     size(costMat,1) == size(costMat,2) || throw(ArgumentError("The input matrix of munkres algrithm should be square, got $(size(costMat))."))
     A = copy(costMat)
-    # preliminaries
+    # preliminaries:
     # "no lines are covered;"
     rowCovered = falses(size(A,1))
     columnCovered = falses(size(A,2))
 
     # "no zeros are starred or primed."
-    # we can use a sparse matrix Zs to store these three kinds of markers:
-    # 0 => N     => Non-zero
-    # 1 => ZERO  => ordinary zero
+    # use a sparse matrix Zs to store these three kinds of zeros:
+    # 0 => NON   => Non-zero
+    # 1 => Z     => ordinary zero
     # 2 => STAR  => starred zero
     # 3 => PRIME => primed zero
-    Zs = spzeros(MARK, size(A)...)
+    Zs = spzeros(Int, size(A)...)
 
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
@@ -27,7 +55,7 @@ function munkres{T<:Real}(costMat::Array{T,2})
     for ii in CartesianRange(size(A))
         # "consider a zero Z of the matrix;"
         if A[ii] == 0
-            Zs[ii] = ZERO
+            Zs[ii] = Z
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
             r, c = ii.I
@@ -47,6 +75,9 @@ function munkres{T<:Real}(costMat::Array{T,2})
         stepNum = 0
     end
 
+    # these three steps are parallel with those in the paper:
+    # J. Munkres, "Algorithms for the Assignment and Transportation Problems",
+    # Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.
     while stepNum != 0
         if stepNum == 1
             stepNum = step1!(Zs, rowCovered, columnCovered)
@@ -60,13 +91,16 @@ function munkres{T<:Real}(costMat::Array{T,2})
     return Zs
 end
 
-function step1!(Zs::SparseMatrixCSC{MARK,Int},
+"""
+Step 1 of the original Munkres' Assignment Algorithm
+"""
+function step1!(Zs::SparseMatrixCSC{Int,Int},
                 rowCovered::BitArray{1},
                 columnCovered::BitArray{1}
                )
     columnLen = size(Zs,2)
     rows = rowvals(Zs)
-    # step 1
+    # step 1:
     zeroCoveredNum = 0
     # "repeat until all zeros are covered."
     while zeroCoveredNum < nnz(Zs)
@@ -91,7 +125,7 @@ function step1!(Zs::SparseMatrixCSC{MARK,Int},
                 else
                     # "if there is no starred zero in this row,
                     #  go at once to step 2."
-                    return stepNum = 2
+                    return 2
                 end
             else
                 # otherwise, this zero is covered
@@ -100,16 +134,19 @@ function step1!(Zs::SparseMatrixCSC{MARK,Int},
         end
     end
     # "go to step 3."
-    return stepNum = 3
+    return 3
 end
 
-function step2!(Zs::SparseMatrixCSC{MARK,Int},
+"""
+Step 2 of the original Munkres' Assignment Algorithm
+"""
+function step2!(Zs::SparseMatrixCSC{Int,Int},
                 rowCovered::BitArray{1},
                 columnCovered::BitArray{1}
                )
     ZsDims = size(Zs)
     rows = rowvals(Zs)
-    # step 2
+    # step 2:
     sequence = Int[]
     flag = false
     # "there is a sequence of alternating primed and starred zeros, constructed
@@ -142,7 +179,7 @@ function step2!(Zs::SparseMatrixCSC{MARK,Int},
     while flag
         flag = false
         r = ind2sub(ZsDims, sequence[end])[1]
-        # find Z₂ in Z₃'s row
+        # find Z₂ in Z₃'s row (always exists)
         for c = 1:ZsDims[2]
             if Zs[r,c] == PRIME
                 # push Z₂ into the sequence
@@ -164,7 +201,7 @@ function step2!(Zs::SparseMatrixCSC{MARK,Int},
     end
 
     # "unstar each starred zero of the sequence;"
-    Zs[sequence[2:2:end-1]] = ZERO
+    Zs[sequence[2:2:end-1]] = Z
 
     # "and star each primed zero of the sequence."
     Zs[sequence[1:2:end]] = STAR
@@ -173,7 +210,7 @@ function step2!(Zs::SparseMatrixCSC{MARK,Int},
         r = rows[i]
         # "erase all primes;"
         if Zs[r,c] == PRIME
-            Zs[r,c] = ZERO
+            Zs[r,c] = Z
         end
         # "and cover every column containing a 0*."
         if Zs[r,c] == STAR
@@ -186,19 +223,23 @@ function step2!(Zs::SparseMatrixCSC{MARK,Int},
 
     # "if all columns are covered, the starred zeros form the desired independent set."
     if all(columnCovered)
-        return stepNum = 0
+        # algorithm exits
+        return 0
     else
         # "otherwise, return to step 1."
-        return stepNum = 1
+        return 1
     end
 end
 
+"""
+Step 3 of the original Munkres' Assignment Algorithm
+"""
 function step3!{T<:Real}(A::Array{T,2},
-                         Zs::SparseMatrixCSC{MARK,Int},
+                         Zs::SparseMatrixCSC{Int,Int},
                          rowCovered::BitArray{1},
                          columnCovered::BitArray{1}
                         )
-    # step 3 (Step C)
+    # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;"
     # find h and track the location of those new zeros
     # inspired by @PaulBellette's method at the link below, all credits to him
@@ -217,17 +258,13 @@ function step3!{T<:Real}(A::Array{T,2},
             push!(minLocations, i, j)
         end
     end
-    # mark new zeros in Zs
-    for i = 1:2:length(minLocations)
-        Zs[minLocations[i], minLocations[i+1]] = ZERO
-    end
 
     # # "add h to each covered row;"
     # A[rowCovered,:] += h
     # # "then subtract h from each uncovered column."
     # A[:,!columnCovered] -= h
 
-    # use for-loops for better performance
+    # de-vectorlize for better performance
     # "add h to each covered row;"
     coveredRowInds = find(rowCovered)
     for j = 1:size(A,2), i in coveredRowInds
@@ -238,6 +275,33 @@ function step3!{T<:Real}(A::Array{T,2},
     for j in uncoveredColumnInds, i = 1:size(A,1)
         @inbounds A[i,j] -= h
     end
+
+    # mark new zeros in Zs and remove those elements that will no longer be zero
+    #             -h                    ||
+    #              |     no change      || reduce old zeros
+    #              | change:(+h)+(-h)=0 ||     change: +h
+    #       +h ---------Covered Row-----||----Covered Row--------
+    #              |  Uncovered Column  ||  Covered Column
+    #==============|====================||================================#
+    #              |   Uncovered Row    ||   Uncovered Row
+    #              |  Uncovered Column  ||  Covered Column
+    #              |    change: -h      ||    change: 0
+    #              | produce new zeros  ||    no change
+    #              |                    ||
+    # produce new zeros
+    for i = 1:2:length(minLocations)
+        Zs[minLocations[i], minLocations[i+1]] = Z
+    end
+    # reduce old zeros
+    coveredColumnInds = find(columnCovered)
+    rows = rowvals(Zs)
+    for c in coveredColumnInds, i in nzrange(Zs, c)
+        r = rows[i]
+        if rowCovered[r]
+            Zs[r,c] = 0
+        end
+    end
+    dropzeros!(Zs)
 
     # "return to step 1."
     return stepNum = 1

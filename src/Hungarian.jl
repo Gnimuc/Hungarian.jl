@@ -1,12 +1,45 @@
 module Hungarian
 
-# enums
-@enum MARK N=0 ZERO=1 STAR=2 PRIME=3
 
-Base.zero(::Type{MARK}) = convert(MARK,0)
+# Zero markers used in hungarian algorithm
+# 0 => NON   => Non-zero
+# 1 => Z     => ordinary zero
+# 2 => STAR  => starred zero
+# 3 => PRIME => primed zero
+const NON = 0
+const Z = 1
+const STAR = 2
+const PRIME = 3
 
 include("./Munkres.jl")
 
+"""
+    hungarian(costMat)
+
+Find an optimal solution of the rectangular assignment problem represented by
+the ``N x M`` matrix `costMat`. Return the optimal column indices and
+corresponding minimal cost.
+
+The `costMat[n,m]` denotes the cost to assign the `n`th job to the `m`th worker.
+Note that, when dealing with "partial assignment" problems, the zero element in
+the return value `assignment` means there is no matching job for that worker.
+
+# Examples
+```julia
+julia> A = [ 24     1     8;
+              5     7    14;
+              6    13    20;
+             12    19    21;
+             18    25     2];
+
+julia> assignment, cost = hungarian(A)
+([2,1,0,0,3],8)
+
+julia> assignment, cost = hungarian(A')
+([2,1,5],8)
+```
+
+"""
 function hungarian{T<:Real}(costMat::Array{T,2})
     # deal with non-square input
     r, c = size(costMat)
