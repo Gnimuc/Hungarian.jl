@@ -11,10 +11,9 @@ matrix:
     - julia: nightly
 notifications:
   email: false
-script:
- - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
- - julia -e 'Pkg.add("Munkres");'
- - julia -e 'Pkg.clone(pwd()); Pkg.build("Hungarian"); Pkg.test("Hungarian"; coverage=true)'
+#script: # use the default script which is equivalent to the following
+# - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+# - julia -e 'Pkg.clone(pwd()); Pkg.build("Hungarian"); Pkg.test("Hungarian"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("Hungarian")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
