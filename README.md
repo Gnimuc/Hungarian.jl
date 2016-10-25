@@ -14,11 +14,11 @@ small assignment problems(e.g. `50x50`). Some benchmarks can be found [here](htt
 
 ## Installation
 ```julia
-Pkg.clone("https://github.com/Gnimuc/Hungarian.jl.git")
+Pkg.add("Hungarian")
 ```
 
 ## Example
-Assume we have 3 workers and 5 tasks with the following cost matrix:
+Assume we have 5 workers and 3 tasks with the following cost matrix:
 ```julia
 weights = [ 24     1     8;
              5     7    14;
@@ -28,14 +28,14 @@ weights = [ 24     1     8;
 ```
 Then solve the assignment problem using Hungarian algorithm:
 ```julia
-# task 1 => worker 2 with cost 1
-# task 2 => worker 1 with cost 5
-# task 5 => worker 3 with cost 2
+# worker 1 => task 2 with weights[1,2] = 1
+# worker 2 => task 1 with weights[2,1] = 5
+# worker 5 => task 3 with weights[5,3] = 2
 # the minimal cost is 1 + 5 + 2 = 8  
 julia> assignment, cost = hungarian(weights)
 ([2,1,0,0,3],8)
 ```
-Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in `assignment` represent the corresponding un-assigned tasks.
+Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in `assignment` represent the corresponding un-assigned workers.
 ## Reference
 1. J. Munkres, "Algorithms for the Assignment and Transportation Problems", Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.
 

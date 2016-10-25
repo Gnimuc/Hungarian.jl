@@ -20,10 +20,9 @@ Find an optimal solution of the rectangular assignment problem represented by
 the ``N x M`` matrix `costMat`. Return the optimal column indices and
 corresponding minimal cost.
 
-The `costMat[n,m]` denotes the cost to assign the `n`th job to the `m`th worker.
-Note that, when dealing with "partial assignment" problems(`n>m`), the zero element
-in the return value `assignment` means that these tasks are not assigned, becase there
-are not enough workers.
+The `costMat[n,m]` denotes the `cost` to assign the `n`th worker to the `m`th job.
+The zero element in the return value `assignment` means that these workers have
+no assigned job.
 
 # Examples
 ```julia
@@ -42,22 +41,15 @@ julia> assignment, cost = hungarian(A')
 
 """
 function hungarian{T<:Real}(costMat::Array{T,2})
-    # deal with non-square input
     r, c = size(costMat)
-    if r != c
-        n = max(r,c)
-        squareMat = fill(typemax(T), n, n)
-        squareMat[1:r, 1:c] = costMat
-    else
-        squareMat = costMat
-    end
+    # transpose if there are more jobs than workers
+    costMatrix = c > r ? costMat : costMat'
 
     # run munkres's algorithm
-    matching = munkres(squareMat)
+    matching = munkres(costMatrix)
 
     # find assignment
-    assignment = [findfirst(matching[i,:].==STAR) for i = 1:r]
-    assignment[assignment.>c] = 0
+    assignment = c > r ? [findfirst(matching[i,:].==STAR) for i = 1:r] : [findfirst(matching[:,i].==STAR) for i = 1:r]
 
     # calculate minimum cost
     cost = 0
