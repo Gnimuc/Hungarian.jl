@@ -30,7 +30,7 @@ assign, cost = hungarian(ones(5,5) - eye(5))
 @test cost == 0
 
 # test for random examples with Munkres.jl
-if Pkg.installed("Munkres") != nothing
+#if Pkg.installed("Munkres") != nothing
     using Munkres
 
     A = rand(300,300)
@@ -52,4 +52,4 @@ if Pkg.installed("Munkres") != nothing
         @test assignH == assignM
         @test costH == costM
     end
-end
+#end
