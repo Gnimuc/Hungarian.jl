@@ -27,7 +27,7 @@ julia> full(matching)
 ```
 """
 function munkres{T<:Real}(costMat::Array{T,2})
-    size(costMat,1) == size(costMat,2) || throw(ArgumentError("The input matrix of munkres algrithm should be square, got $(size(costMat))."))
+    size(costMat,2) ≥ size(costMat,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
     A = copy(costMat)
     # preliminaries:
     # "no lines are covered;"
@@ -50,7 +50,8 @@ function munkres{T<:Real}(costMat::Array{T,2})
 
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
-    A .-= minimum(A, 1)
+    # Note that, this step should be removed if the input matrix is not square.
+    # A .-= minimum(A, 1)
 
     for ii in CartesianRange(size(A))
         # "consider a zero Z of the matrix;"
@@ -71,7 +72,9 @@ function munkres{T<:Real}(costMat::Array{T,2})
     stepNum = 1
 
     # if the assignment is already found, exist
-    if all(columnCovered)
+    # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
+    # so only K columns are counted here, where K = min(size(Zs))
+    if length(find(columnCovered)) == minimum(size(Zs))
         stepNum = 0
     end
 
@@ -222,7 +225,9 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
     rowCovered[:] = false
 
     # "if all columns are covered, the starred zeros form the desired independent set."
-    if all(columnCovered)
+    # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
+    # so only K columns are counted here, where K = min(size(Zs))
+    if length(find(columnCovered)) == minimum(size(Zs))
         # algorithm exits
         return 0
     else
