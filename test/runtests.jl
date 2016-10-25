@@ -2,6 +2,8 @@ using Hungarian
 using Base.Test
 
 # test for simple examples
+println("Simple examples:")
+
 A = [ 0.891171  0.0320582   0.564188  0.8999    0.620615;
       0.166402  0.861136    0.201398  0.911772  0.0796335;
       0.77272   0.782759    0.905982  0.800239  0.297333;
@@ -29,27 +31,45 @@ assign, cost = hungarian(ones(5,5) - eye(5))
 @test assign == [1, 2, 3, 4, 5]
 @test cost == 0
 
-# test for random examples with Munkres.jl
-#if Pkg.installed("Munkres") != nothing
-    using Munkres
+println("Passed!")
 
-    A = rand(300,300)
+# test for random examples with Munkres.jl
+using Munkres
+
+println("Random examples:")
+println("  rand(300,300):")
+A = rand(300,300)
+@time assignH, costH = hungarian(A)
+@time assignM = munkres(A)
+@test assignH == assignM
+
+println("  rand(200,400):")
+A = rand(200,400)
+@time assignH, costH = hungarian(A)
+@time assignM = munkres(A)
+@test assignH == assignM
+
+println("  rand(500,250):")
+A = rand(300,150)
+@time assignH, costH = hungarian(A)
+@time assignM = munkres(A)
+@test assignH == assignM
+
+for i = 1:100
+    A = rand(50,50)
     assignH, costH = hungarian(A)
     assignM = munkres(A)
 
-    for i = 1:100
-        A = rand(50,50)
-        assignH, costH = hungarian(A)
-        assignM = munkres(A)
-
-        costM = 0
-        for i in zip(1:size(A,1), assignM)
-            if i[2] != 0
-                costM += A[i...]
-            end
+    costM = 0
+    for i in zip(1:size(A,1), assignM)
+        if i[2] != 0
+            costM += A[i...]
         end
-
-        @test assignH == assignM
-        @test costH == costM
     end
-#end
+
+    @test assignH == assignM
+    @test costH == costM
+end
+
+println("Passed!")
+println("All tests passed!")
