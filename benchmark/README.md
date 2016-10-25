@@ -18,13 +18,13 @@ Platform Info:
 ### Table: the average elapsed time (in seconds)
 | rand(n,n)  | Hungarian.jl| [Munkres.jl](https://github.com/FugroRoames/Munkres.jl) |  [Matlab(R2015b) Implementation by Yi Cao](http://cn.mathworks.com/matlabcentral/fileexchange/20652-hungarian-algorithm-for-linear-assignment-problems--v2-3-)|
 |:-:|:-:|:-:|:-:|
-| 10x10 | 0.00029  | **0.00015**   | 0.0953 |
-| 50x50 | 0.0022  | **0.0015**  | 0.0774 |
-| 100x100|**0.0055** | 0.0107   | 0.1083 |
+| 10x10 | 0.00029  | **0.00015**   | 0.0035 |
+| 50x50 | 0.0022  | **0.0015**  | 0.0646 |
+| 100x100|**0.0055** | 0.0107   | 0.0948 |
 | 200x200|**0.0211**  | 0.0433   | 0.2325 |
-| 400x400|**0.1636** | 0.3793   | 0.9122 |
-| 800x800|**1.6093**   | 3.6520  | 4.9853 |
-| 1000x1000| **3.5943**| 7.3933  | 8.0855 |
+| 400x400|**0.1636** | 0.3793   | 0.8642|
+| 800x800|**1.6093**   | 3.6520  | 4.3961 |
+| 1000x1000| **3.5943**| 7.3933  | 7.3461 |
 | 2000x2000| **29.3906**| 59.9122 |52.0212 |
 
 A Matlab implementation of the algorithm is shown here as a rough baseline.
