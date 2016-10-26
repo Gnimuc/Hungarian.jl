@@ -7,9 +7,9 @@
 
 The package provides one implementation of the **[Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm)**(*Kuhn-Munkres algorithm*) based on its matrix interpretation.
 
-This implementation uses a sparse matrix to track marked zeros, so it costs less
+This implementation uses a sparse matrix to keep tracking marked zeros, so it costs less
 time and memory when dealing with large scale assignment problems(e.g. a `1000x1000`
-cost matrix as input). Another Julia implementation of Hungarian algorithm is [Munkres.jl](https://github.com/FugroRoames/Munkres.jl) which is faster when solving
+cost matrix as input). Another Julia implementation of the Hungarian algorithm is [Munkres.jl](https://github.com/FugroRoames/Munkres.jl) which is faster when solving
 small assignment problems(e.g. `50x50`). Some benchmarks can be found [here](https://github.com/Gnimuc/Hungarian.jl/tree/master/benchmark).
 
 ## Installation
@@ -18,7 +18,7 @@ Pkg.add("Hungarian")
 ```
 
 ## Example
-Assume we have 5 workers and 3 tasks with the following cost matrix:
+Let's say we have 5 workers and 3 tasks with the following cost matrix:
 ```julia
 weights = [ 24     1     8;
              5     7    14;
@@ -26,17 +26,20 @@ weights = [ 24     1     8;
             12    19    21;
             18    25     2]
 ```
-Then solve the assignment problem using Hungarian algorithm:
+We can solve the assignment problem by function `hungarian`:
 ```julia
+julia> using Hungarian
+
+julia> assignment, cost = hungarian(weights)
+([2,1,0,0,3],8)
+
 # worker 1 => task 2 with weights[1,2] = 1
 # worker 2 => task 1 with weights[2,1] = 5
 # worker 5 => task 3 with weights[5,3] = 2
 # the minimal cost is 1 + 5 + 2 = 8  
-julia> assignment, cost = hungarian(weights)
-([2,1,0,0,3],8)
 ```
-Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in `assignment` represent the corresponding un-assigned workers.
-## Reference
+Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in the `assignment` mean that no task is assigned to those workers.
+## References
 1. J. Munkres, "Algorithms for the Assignment and Transportation Problems", Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.
 
 2. http://csclab.murraystate.edu/bob.pilgrim/445/munkres.html
