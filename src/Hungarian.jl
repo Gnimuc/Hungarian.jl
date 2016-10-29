@@ -42,14 +42,14 @@ julia> assignment, cost = hungarian(A')
 """
 function hungarian{T<:Real}(costMat::Array{T,2})
     r, c = size(costMat)
-    # transpose if there are more jobs than workers
-    costMatrix = c > r ? costMat : costMat'
+    # transpose when workers ≤ jobs
+    costMatrix = r ≤ c ? costMat : costMat'
 
     # run munkres's algorithm
     matching = munkres(costMatrix)
 
     # find assignment
-    assignment = c > r ? [findfirst(matching[i,:].==STAR) for i = 1:r] : [findfirst(matching[:,i].==STAR) for i = 1:r]
+    assignment = r ≤ c ? [findfirst(matching[i,:].==STAR) for i = 1:r] : [findfirst(matching[:,i].==STAR) for i = 1:r]
 
     # calculate minimum cost
     cost = 0
