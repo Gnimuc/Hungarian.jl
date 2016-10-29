@@ -17,7 +17,7 @@ small assignment problems(e.g. `50x50`). Some benchmarks can be found [here](htt
 Pkg.add("Hungarian")
 ```
 
-## Example
+## Quick start
 Let's say we have 5 workers and 3 tasks with the following cost matrix:
 ```julia
 weights = [ 24     1     8;
@@ -39,6 +39,54 @@ julia> assignment, cost = hungarian(weights)
 # the minimal cost is 1 + 5 + 2 = 8  
 ```
 Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in the `assignment` mean that no task is assigned to those workers.
+
+# Usage
+When solving a canonical assignment problem, namely, the cost matrix is square, one can directly get the matching via `Hungarian.munkres(x)` instead of using `hungraian(x)`:
+```julia
+julia> using Hungarian
+
+julia> matching = Hungarian.munkres(rand(5,5))
+5×5 sparse matrix with 9 Int64 nonzero entries:
+	[2, 1]  =  1
+	[5, 1]  =  2
+	[1, 2]  =  2
+	[5, 2]  =  1
+	[4, 3]  =  2
+	[2, 4]  =  2
+	[4, 4]  =  1
+	[1, 5]  =  1
+	[3, 5]  =  2
+
+# 0 => non-zero
+# 1 => zero
+# 2 => STAR
+julia> full(matching)
+5×5 Array{Int64,2}:
+ 0  2  0  0  1
+ 1  0  0  2  0
+ 0  0  0  0  2
+ 0  0  2  1  0
+ 2  1  0  0  0
+
+# against column
+julia> [findfirst(matching[i,:].==Hungarian.STAR) for i = 1:5]
+5-element Array{Int64,1}:
+ 2
+ 4
+ 5
+ 3
+ 1
+
+# against row
+julia> [findfirst(matching[:,i].==Hungarian.STAR) for i = 1:5]
+5-element Array{Int64,1}:
+ 5
+ 1
+ 4
+ 2
+ 3
+```
+
 ## References
 1. J. Munkres, "Algorithms for the Assignment and Transportation Problems", Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.
 
