@@ -14,7 +14,7 @@ const PRIME = 3
 include("./Munkres.jl")
 
 """
-    hungarian(costMat)
+    hungarian(costMat) -> (assignment, cost)
 
 Find an optimal solution of the rectangular assignment problem represented by
 the ``N x M`` matrix `costMat`. Return the optimal column indices and

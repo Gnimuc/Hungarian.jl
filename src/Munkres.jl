@@ -1,5 +1,5 @@
 """
-    munkres(costMat)
+    munkres(costMat) -> Zs
 
 Find an optimal solution of the assignment problem represented by the square
 matrix `costMat`. Return an sparse matrix illustrating the optimal matching.
