@@ -42,7 +42,7 @@ julia> assignment, cost = hungarian(A')
 """
 function hungarian{T<:Real}(costMat::Array{T,2})
     r, c = size(costMat)
-    # transpose when workers ≤ jobs
+    r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
     costMatrix = r ≤ c ? costMat : costMat'
 
     # run munkres's algorithm
