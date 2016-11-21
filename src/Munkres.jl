@@ -53,6 +53,8 @@ function munkres{T<:Real}(costMat::Array{T,2})
     # Note that, this step should be removed if the input matrix is not square.
     # A .-= minimum(A, 1)
 
+    rowSTAR = falses(size(A,1))
+    columnSTAR = falses(size(A,2))
     for ii in CartesianRange(size(A))
         # "consider a zero Z of the matrix;"
         if A[ii] == 0
@@ -60,8 +62,10 @@ function munkres{T<:Real}(costMat::Array{T,2})
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
             r, c = ii.I
-            if !( any(Zs[r,:] .== STAR) || any(Zs[:,c] .== STAR) )
+            if !columnSTAR[c] && !rowSTAR[r]
                 Zs[r,c] = STAR
+                rowSTAR[r] = true
+                columnSTAR[c] = true
                 # "then cover every column containing a starred zero."
                 columnCovered[c] = true
             end
