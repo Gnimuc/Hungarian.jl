@@ -41,7 +41,7 @@ julia> assignment, cost = hungarian(weights)
 Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in the `assignment` mean that no task is assigned to those workers.
 
 # Usage
-When solving a canonical assignment problem, namely, the cost matrix is square, one can directly get the matching via `Hungarian.munkres(x)` instead of using `hungraian(x)`:
+When solving a canonical assignment problem, namely, the cost matrix is square, one can directly get the matching via `Hungarian.munkres(x)` instead of using `hungarian(x)`:
 ```julia
 julia> using Hungarian
 
