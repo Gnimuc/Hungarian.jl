@@ -254,8 +254,8 @@ function step3!{T<:Real}(A::Array{T,2},
     # inspired by @PaulBellette's method at the link below, all credits to him
     # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
     h = typemax(T)
-    uncoveredRowInds = find(.!rowCovered)
-    uncoveredColumnInds = find(.!columnCovered)
+    uncoveredRowInds = find(!, rowCovered)
+    uncoveredColumnInds = find(!, columnCovered)
     minLocations = Int[]
     for j in uncoveredColumnInds, i in uncoveredRowInds
         @inbounds cost = A[i,j]
