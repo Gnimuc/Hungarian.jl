@@ -26,7 +26,7 @@ julia> full(matching)
  0  0  2
 ```
 """
-function munkres{T<:Real}(costMat::Array{T,2})
+function munkres(costMat::Array{T,2}) where {T<:Real}
     size(costMat,2) ≥ size(costMat,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
     A = copy(costMat)
     # preliminaries:
@@ -101,10 +101,7 @@ end
 """
 Step 1 of the original Munkres' Assignment Algorithm
 """
-function step1!(Zs::SparseMatrixCSC{Int,Int},
-                rowCovered::BitArray{1},
-                columnCovered::BitArray{1}
-               )
+function step1!(Zs, rowCovered, columnCovered)
     columnLen = size(Zs,2)
     rows = rowvals(Zs)
     # step 1:
@@ -243,11 +240,7 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!{T<:Real}(A::Array{T,2},
-                         Zs::SparseMatrixCSC{Int,Int},
-                         rowCovered::BitArray{1},
-                         columnCovered::BitArray{1}
-                        )
+function step3!(A::Array{T,2}, Zs, rowCovered, columnCovered) where {T<:Real}
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;"
     # find h and track the location of those new zeros
