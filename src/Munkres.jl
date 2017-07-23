@@ -258,12 +258,6 @@ function step3!(A::Array{T,2}, Zs, rowCovered, columnCovered) where {T<:Real}
         end
     end
 
-    # # "add h to each covered row;"
-    # A[rowCovered,:] += h
-    # # "then subtract h from each uncovered column."
-    # A[:,!columnCovered] -= h
-
-    # de-vectorlize for better performance
     # "add h to each covered row;"
     coveredRowInds = find(rowCovered)
     for j = 1:size(A,2), i in coveredRowInds

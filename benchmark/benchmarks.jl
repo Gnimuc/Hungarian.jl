@@ -2,11 +2,10 @@ using PkgBenchmark
 using Hungarian
 using Munkres
 
-@benchgroup "utf8" ["string", "unicode"] begin
-    RNG = srand(7)
+@benchgroup "square matrix" begin
+    seed = srand(7)
     for n in [10, 50, 100, 200, 400, 800, 1000, 2000]
-        A = rand(RNG, n, n)
-        @bench "Hungarian.jl" hungarian($A)
-        @bench "Munkres.jl" munkres($A)
+        A = rand(seed, n, n)
+        @bench "$n x $n" hungarian($A)
     end
 end

@@ -8,7 +8,7 @@ using Base.Test
           0.561423  0.170607    0.615941  0.960503  0.981906;
           0.748248  0.00799335  0.554215  0.745299  0.42637]
 
-    assign, cost = hungarian(A)
+    assign, cost = @inferred hungarian(A)
     @test assign == [2, 3, 5, 1, 4]
 
     B = [ 24     1     8;
