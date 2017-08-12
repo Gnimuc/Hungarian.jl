@@ -40,25 +40,14 @@ julia> assignment, cost = hungarian(A')
 ```
 
 """
-function hungarian{T<:Real}(costMat::Array{T,2})
+function hungarian(costMat::AbstractMatrix)
     r, c = size(costMat)
-    r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
+    # r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
     costMatrix = r ≤ c ? costMat : costMat'
-
-    # run munkres's algorithm
     matching = munkres(costMatrix)
-
-    # find assignment
-    assignment = r ≤ c ? [findfirst(matching[i,:].==STAR) for i = 1:r] : [findfirst(matching[:,i].==STAR) for i = 1:r]
-
+    assignment = r ≤ c ? findn(matching'.==STAR)[1] : [findfirst(matching[:,i].==STAR) for i = 1:r]
     # calculate minimum cost
-    cost = 0
-    for i in zip(1:r, assignment)
-        if i[2] != 0
-            cost += costMat[i...]
-        end
-    end
-
+    cost = sum(costMat[i...] for i in zip(1:r, assignment) if i[2] != 0)
     return assignment, cost
 end
 

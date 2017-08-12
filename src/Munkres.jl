@@ -144,10 +144,7 @@ end
 """
 Step 2 of the original Munkres' Assignment Algorithm
 """
-function step2!(Zs::SparseMatrixCSC{Int,Int},
-                rowCovered::BitArray{1},
-                columnCovered::BitArray{1}
-               )
+function step2!(Zs, rowCovered, columnCovered)
     ZsDims = size(Zs)
     rows = rowvals(Zs)
     # step 2:
@@ -223,7 +220,7 @@ function step2!(Zs::SparseMatrixCSC{Int,Int},
     end
 
     # "uncover every row"
-    rowCovered[:] = false
+    fill!(rowCovered, false)
 
     # "if all columns are covered, the starred zeros form the desired independent set."
     # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
@@ -261,12 +258,6 @@ function step3!(A::Array{T,2}, Zs, rowCovered, columnCovered) where {T<:Real}
         end
     end
 
-    # # "add h to each covered row;"
-    # A[rowCovered,:] += h
-    # # "then subtract h from each uncovered column."
-    # A[:,!columnCovered] -= h
-
-    # de-vectorlize for better performance
     # "add h to each covered row;"
     coveredRowInds = find(rowCovered)
     for j = 1:size(A,2), i in coveredRowInds
