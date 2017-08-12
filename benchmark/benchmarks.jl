@@ -1,6 +1,5 @@
 using PkgBenchmark
 using Hungarian
-using Munkres
 
 @benchgroup "square matrix" begin
     seed = srand(7)
