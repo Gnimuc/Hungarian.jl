@@ -4,6 +4,9 @@
 Find an optimal solution of the assignment problem represented by the square
 matrix `costMat`. Return an sparse matrix illustrating the optimal matching.
 
+Elements in the matrix can be set to `missing`. In this case, the corresponding
+matching cannot be considered by the algorithm. 
+
 # Examples
 
 ```julia
@@ -24,11 +27,36 @@ julia> full(matching)
  2  0  0
  0  2  0
  0  0  2
+ 
+julia> costMat[1, 1] = missing
+3×3 Array{Float64,2}:
+ 0.0  1.0  1.0
+ 1.0  0.0  1.0
+ 1.0  1.0  0.0
 ```
 """
-function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
+function munkres(costMat::AbstractMatrix) 
     size(costMat,2) ≥ size(costMat,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
+    if typeof(eltype(costMat)) == Union
+        hasMissings = true
+        T = eltype(costMat).a <: Real ? eltype(costMat).a : eltype(costMat).b
+    else
+        hasMissings = false
+        T = eltype(costMat)
+    end
+    T <: Real || throw(TypeError(:munkres, "", AbstractMatrix{Union{Missing, T}} where T <: Real, costMat))
+
     A = copy(costMat)
+
+    # copy A and replace the missing values by infinity (so they do not interfere
+    # with minimum computations). if there are no missing values, then it makes no sense 
+    # to make a new data structure, just reuse A. 
+    if hasMissings
+        Ainf = reshape(T[typeof(e) == T ? e : typemax(T) for e in vec(A)], size(A))
+    else 
+        Ainf = A
+    end
+
     # preliminaries:
     # "no lines are covered;"
     rowCovered = falses(size(A,1))
@@ -46,7 +74,9 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
     # it's succinct to implement this using broadcasting.
-    A .-= minimum(A, 2)
+    A .-= minimum(Ainf, 2)
+
+    println(A)
 
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
@@ -57,7 +87,7 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     columnSTAR = falses(size(A,2))
     for ii in CartesianRange(size(A))
         # "consider a zero Z of the matrix;"
-        if A[ii] == 0
+        if ! ismissing(A[ii]) && A[ii] == 0
             Zs[ii] = Z
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
@@ -96,6 +126,11 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     end
 
     return Zs
+end
+
+function munkres(costMat::AbstractMatrix{T}) where {T <: Real}
+    cm = AbstractMatrix{Union{Missing, T}}(costMat)
+    return munkres(cm)
 end
 
 """
@@ -237,23 +272,32 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where {T<:Real}
+function step3!(A::AbstractMatrix, Zs, rowCovered, columnCovered) 
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;"
     # find h and track the location of those new zeros
     # inspired by @PaulBellette's method at the link below, all credits to him
     # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
+
+    if typeof(eltype(A)) == Union
+        hasMissings = true
+        T = eltype(A).a <: Real ? eltype(A).a : eltype(A).b
+    else
+        hasMissings = false
+        T = eltype(A)
+    end
+
     h = typemax(T)
     uncoveredRowInds = find(!, rowCovered)
     uncoveredColumnInds = find(!, columnCovered)
     minLocations = Int[]
     for j in uncoveredColumnInds, i in uncoveredRowInds
         @inbounds cost = A[i,j]
-        if cost < h
+        if ! ismissing(cost) && cost < h
             h = cost
             empty!(minLocations)
             push!(minLocations, i, j)
-        elseif cost == h
+        elseif ! ismissing(cost) && cost == h
             push!(minLocations, i, j)
         end
     end
@@ -261,12 +305,16 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where {T<:R
     # "add h to each covered row;"
     coveredRowInds = find(rowCovered)
     for j = 1:size(A,2), i in coveredRowInds
-        @inbounds A[i,j] += h
+        if A[i,j] != missing
+            @inbounds A[i,j] += h
+        end
     end
 
     # "then subtract h from each uncovered column."
     for j in uncoveredColumnInds, i = 1:size(A,1)
-        @inbounds A[i,j] -= h
+        if ! ismissing(A[i,j])
+            @inbounds A[i,j] -= h
+        end
     end
 
     # mark new zeros in Zs and remove those elements that will no longer be zero

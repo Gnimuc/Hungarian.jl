@@ -11,6 +11,8 @@ const Z = 1
 const STAR = 2
 const PRIME = 3
 
+using Missings
+
 include("./Munkres.jl")
 
 """
@@ -45,7 +47,7 @@ function hungarian(costMat::AbstractMatrix)
     # r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
     costMatrix = r ≤ c ? costMat : costMat'
     matching = munkres(costMatrix)
-    assignment = r ≤ c ? findn(matching'.==STAR)[1] : [findfirst(matching[:,i].==STAR) for i = 1:r]
+    assignment = r ≤ c ? findn(matching' .== STAR)[1] : [findfirst(matching[:,i] .== STAR) for i = 1:r]
     # calculate minimum cost
     cost = sum(costMat[i...] for i in zip(1:r, assignment) if i[2] != 0)
     return assignment, cost
