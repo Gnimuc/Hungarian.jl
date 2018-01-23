@@ -4,13 +4,10 @@
 Find an optimal solution of the assignment problem represented by the square
 matrix `costMat`. Return an sparse matrix illustrating the optimal matching.
 
-Elements in the matrix can be set to `missing`. In this case, the corresponding
-matching cannot be considered by the algorithm. 
-
 # Examples
 
 ```julia
-julia> costMat = ones(3,3)-eye(3,3)
+julia> costMat = ones(3, 3) - eye(3, 3)
 3×3 Array{Float64,2}:
  0.0  1.0  1.0
  1.0  0.0  1.0
@@ -27,12 +24,6 @@ julia> full(matching)
  2  0  0
  0  2  0
  0  0  2
- 
-julia> costMat[1, 1] = missing
-3×3 Array{Float64,2}:
- 0.0  1.0  1.0
- 1.0  0.0  1.0
- 1.0  1.0  0.0
 ```
 """
 function munkres(costMat::AbstractMatrix{T}) where T <: Real
