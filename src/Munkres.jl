@@ -100,32 +100,21 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
     return Zs
 end
 
-function munkres(costMat::AbstractMatrix) 
-    # check the type of the matrix (cannot do it within the function prototype, 
-    # as Matrix{Float64} <: (Matrix{T} where T <: Real) is false)
-    if typeof(eltype(costMat)) == Union
-        T = eltype(costMat).a <: Real ? eltype(costMat).a : eltype(costMat).b
-    else
-        T = eltype(costMat)
-    end
-    T <: Real || throw(TypeError(:munkres, "", AbstractMatrix{Union{Missing, T}} where T <: Real, costMat))
-
+function munkres(costMat::AbstractMatrix{S}) where {T <: Real, S <: Union{Missing, T}}
     # replace forbidden edges (i.e. those with a missing cost) by a very large cost, so that they
     # are never chosen for the matching (except if they are the only possible edges)
-    infinity = typemax(T)
-    cm = copy(costMat)
-    cm[ismissing.(costMat)] = infinity
-    cm = AbstractMatrix{T}(cm) # get rid of the missing type
+    costMatReal = [ismissing(x) ? typemax(T) : x for x in costMat]
 
-    # compute the assignment with the standard procedure
-    assignment = munkres(cm)
+    # compute the assignment with the standard procedure. the return value is guaranteed to be sparse
+    assignment = munkres(costMatReal)
 
     # remove the forbidden edges, would they be in the assignment
-    for i in size(costMat, 1)
-        for j in size(costMat, 2)
-            if ismissing(costMat[i, j]) && assignment[i, j] == STAR
-                assignment[i, j] = Z # standard zero, no assignment made
-            end
+    columnLen = size(assignment, 2)
+    rows = rowvals(assignment)
+    for c in 1:columnLen, i in nzrange(assignment, c)
+        r = rows[i]
+        if assignment[r, c] == STAR && ismissing(costMat[r, c])
+            assignment[r, c] = Z # standard zero, no assignment made
         end
     end
 
