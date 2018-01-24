@@ -7,7 +7,7 @@ matrix `costMat`. Return an sparse matrix illustrating the optimal matching.
 # Examples
 
 ```julia
-julia> costMat = ones(3,3)-eye(3,3)
+julia> costMat = ones(3, 3) - eye(3, 3)
 3×3 Array{Float64,2}:
  0.0  1.0  1.0
  1.0  0.0  1.0
@@ -26,9 +26,11 @@ julia> full(matching)
  0  0  2
 ```
 """
-function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
+function munkres(costMat::AbstractMatrix{T}) where T <: Real
     size(costMat,2) ≥ size(costMat,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
+
     A = copy(costMat)
+
     # preliminaries:
     # "no lines are covered;"
     rowCovered = falses(size(A,1))
@@ -96,6 +98,27 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     end
 
     return Zs
+end
+
+function munkres(costMat::AbstractMatrix{S}) where {T <: Real, S <: Union{Missing, T}}
+    # replace forbidden edges (i.e. those with a missing cost) by a very large cost, so that they
+    # are never chosen for the matching (except if they are the only possible edges)
+    costMatReal = [ismissing(x) ? typemax(T) : x for x in costMat]
+
+    # compute the assignment with the standard procedure. the return value is guaranteed to be sparse
+    assignment = munkres(costMatReal)
+
+    # remove the forbidden edges, would they be in the assignment
+    columnLen = size(assignment, 2)
+    rows = rowvals(assignment)
+    for c in 1:columnLen, i in nzrange(assignment, c)
+        r = rows[i]
+        if assignment[r, c] == STAR && ismissing(costMat[r, c])
+            assignment[r, c] = Z # standard zero, no assignment made
+        end
+    end
+
+    return assignment
 end
 
 """
@@ -237,12 +260,13 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where {T<:Real}
+function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: Real
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;"
     # find h and track the location of those new zeros
     # inspired by @PaulBellette's method at the link below, all credits to him
     # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
+
     h = typemax(T)
     uncoveredRowInds = find(!, rowCovered)
     uncoveredColumnInds = find(!, columnCovered)

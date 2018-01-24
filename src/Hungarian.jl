@@ -11,6 +11,8 @@ const Z = 1
 const STAR = 2
 const PRIME = 3
 
+using Missings
+
 include("./Munkres.jl")
 
 """
@@ -23,6 +25,9 @@ corresponding minimal cost.
 The `costMat[n,m]` denotes the `cost` to assign the `n`th worker to the `m`th job.
 The zero element in the return value `assignment` means that these workers have
 no assigned job.
+
+Elements in the matrix can be set to `missing`. In this case, the corresponding
+matching cannot be considered by the algorithm. 
 
 # Examples
 ```julia
@@ -37,6 +42,19 @@ julia> assignment, cost = hungarian(A)
 
 julia> assignment, cost = hungarian(A')
 ([2,1,5],8)
+
+julia> using Missings
+
+julia> costMat = [ missing  1   1
+                    1   0   1
+                    1   1   0 ]
+3×3 Array{Union{Float64, Missings.Missing},2}:
+  missing  1.0  1.0
+ 1.0       0.0  1.0
+ 1.0       1.0  0.0
+
+julia> hungarian(costMat)
+([2, 1, 3], 2)
 ```
 
 """
@@ -45,7 +63,7 @@ function hungarian(costMat::AbstractMatrix)
     # r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
     costMatrix = r ≤ c ? costMat : costMat'
     matching = munkres(costMatrix)
-    assignment = r ≤ c ? findn(matching'.==STAR)[1] : [findfirst(matching[:,i].==STAR) for i = 1:r]
+    assignment = r ≤ c ? findn(matching' .== STAR)[1] : [findfirst(matching[:,i] .== STAR) for i = 1:r]
     # calculate minimum cost
     cost = sum(costMat[i...] for i in zip(1:r, assignment) if i[2] != 0)
     return assignment, cost

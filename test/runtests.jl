@@ -69,6 +69,20 @@ end
     end
 end
 
+@testset "forbidden edges" begin
+    # result checked against Python package munkres: https://github.com/bmc/munkres/blob/master/munkres.py
+    # Python code: 
+    #   m = Munkres()
+    #   matrix = [[DISALLOWED, 1, 1], [1, 0, 1], [1, 1, 0]]
+    #   m.compute(matrix)
+    # Result: [(0, 1), (1, 0), (2, 2)]
+    using Missings
+    A = Union{Int, Missing}[missing 1 1; 1 0 1; 1 1 0]
+    assign, cost = hungarian(A)
+    @test assign == [2, 1, 3]
+    @test cost == 2
+end
+
 @testset "issue #2" begin
 A = [0   1   2   3   4   5   6   7   8   9   1   2   3   4   5   6   7   8   9  10   2   3   4   5   6   7   8   9  10  11;
      1   0   1   2   3   4   5   6   7   8   2   1   2   3   4   5   6   7   8   9   3   2   3   4   5   6   7   8   9  10;
