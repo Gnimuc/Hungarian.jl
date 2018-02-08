@@ -315,7 +315,7 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: 
     for c in coveredColumnInds, i in nzrange(Zs, c)
         r = rows[i]
         if rowCovered[r]
-            Zs[r,c] = 0
+            Zs[r,c] = NON
         end
     end
     dropzeros!(Zs)
