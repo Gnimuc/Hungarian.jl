@@ -28,7 +28,7 @@ julia> full(matching)
 """
 function munkres(costMat::AbstractMatrix{T}) where T <: Real
     A = copy(costMat)
-    return munkres(A)
+    return munkres!(A)
 end
 
 """
