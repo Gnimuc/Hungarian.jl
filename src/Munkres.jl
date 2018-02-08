@@ -27,9 +27,20 @@ julia> full(matching)
 ```
 """
 function munkres(costMat::AbstractMatrix{T}) where T <: Real
-    size(costMat,2) ≥ size(costMat,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
-
     A = copy(costMat)
+    return munkres(A)
+end
+
+"""
+    munkres(costMat) -> Zs
+
+Identical to `munkres`, except that it directly modifies its input matrix `costMat`
+instead of allocating a copy. *As a result, the value of this matrix in the caller 
+code will be modified and should therefore no more be used!* This function should 
+rather be used by advanced users to improve performance of critical code. 
+"""
+function munkres!(A::AbstractMatrix{T}) where T <: Real
+    size(A,2) ≥ size(A,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
 
     # preliminaries:
     # "no lines are covered;"
