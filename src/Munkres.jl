@@ -42,7 +42,7 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
     # 1 => Z     => ordinary zero
     # 2 => STAR  => starred zero
     # 3 => PRIME => primed zero
-    Zs = spzeros(Int, size(A)...)
+    Zs = spzeros(Int8, size(A)...)
 
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
