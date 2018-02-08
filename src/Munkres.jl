@@ -261,20 +261,24 @@ end
 Step 3 of the original Munkres' Assignment Algorithm
 """
 function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: Real
+    # deal with integer overflow:
+    # here I simply promote small integer primitive type to 32 bit integer
+    Ti = T <: Union{Int8, Int16, Int32, UInt8, UInt16, UInt32} ? widen(T) : T
+
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;"
     # find h and track the location of those new zeros
     # inspired by @PaulBellette's method at the link below, all credits to him
     # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
 
-    h = typemax(T)
+    h = typemax(Ti)
     uncoveredRowInds = find(!, rowCovered)
     uncoveredColumnInds = find(!, columnCovered)
     minLocations = Int[]
     for j in uncoveredColumnInds, i in uncoveredRowInds
         @inbounds cost = A[i,j]
         if cost < h
-            h = cost
+            h = Ti(cost)
             empty!(minLocations)
             push!(minLocations, i, j)
         elseif cost == h
