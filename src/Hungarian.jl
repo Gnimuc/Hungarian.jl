@@ -6,10 +6,10 @@ module Hungarian
 # 1 => Z     => ordinary zero
 # 2 => STAR  => starred zero
 # 3 => PRIME => primed zero
-const NON = 0
-const Z = 1
-const STAR = 2
-const PRIME = 3
+const NON = Int8(0)
+const Z = Int8(1)
+const STAR = Int8(2)
+const PRIME = Int8(3)
 
 using Missings
 
@@ -27,7 +27,7 @@ The zero element in the return value `assignment` means that these workers have
 no assigned job.
 
 Elements in the matrix can be set to `missing`. In this case, the corresponding
-matching cannot be considered by the algorithm. 
+matching cannot be considered by the algorithm.
 
 # Examples
 ```julia
