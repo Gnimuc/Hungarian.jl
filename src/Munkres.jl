@@ -88,7 +88,7 @@ function munkres!(A::AbstractMatrix{T}) where T <: Real
     # preliminaries done, go to step 1
     stepNum = 1
 
-    # if the assignment is already found, exist
+    # if the assignment is already found, exit
     # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
     # so only K columns are counted here, where K = min(size(Zs))
     if length(find(columnCovered)) == minimum(size(Zs))
