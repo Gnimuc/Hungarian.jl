@@ -35,6 +35,8 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
     # "no lines are covered;"
     rowCovered = falses(size(A,1))
     columnCovered = falses(size(A,2))
+    Δrow = zeros(size(A,1))
+    Δcolumn = zeros(size(A,2))
 
     # "no zeros are starred or primed."
     # use a sparse matrix Zs to store these three kinds of zeros:
@@ -93,7 +95,7 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
         elseif stepNum == 2
             stepNum = step2!(Zs, rowCovered, columnCovered)
         elseif stepNum == 3
-            stepNum = step3!(A, Zs, rowCovered, columnCovered)
+            stepNum = step3!(A, Zs, rowCovered, columnCovered, Δrow, Δcolumn)
         end
     end
 
@@ -138,8 +140,9 @@ function step1!(Zs, rowCovered, columnCovered)
             if columnCovered[c] == false && rowCovered[r] == false
                 Zs[r,c] = PRIME
                 # "if there is a starred zero Z in this row"
+                # @views columnZ = findnext(Zs[r,:], STAR, 1)
                 columnZ = 0
-                for zc = 1:columnLen
+                @inbounds for zc = 1:columnLen
                     if Zs[r,zc] == STAR
                         columnZ = zc
                         break
@@ -260,23 +263,50 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: Real
+function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered, Δrow, Δcolumn) where T <: Real
     # deal with integer overflow:
     # here I simply promote small integer primitive type to 32 bit integer
     Ti = T <: Union{Int8, Int16, Int32, UInt8, UInt16, UInt32} ? widen(T) : T
 
     # step 3(Step C):
-    # "let h denote the smallest uncovered element of the matrix;"
-    # find h and track the location of those new zeros
-    # inspired by @PaulBellette's method at the link below, all credits to him
-    # https://github.com/FugroRoames/Munkres.jl/blob/34065d11d0a6f224731e77f84c7cf1f5096121b5/src/Munkres.jl#L321-L347
+    # "let h denote the smallest uncovered element of the matrix;
+    #  add h to each covered row; then subtract h from each uncovered column."
+    #             -h                    ||
+    #              |     no change      ||  reduce old zeros
+    #              | change:(+h)+(-h)=0 ||     change: +h
+    #       +h ---------Covered Row-----||----Covered Row--------
+    #              |  Uncovered Column  ||   Covered Column
+    #==============|====================||================================#
+    #              |   Uncovered Row    ||    Uncovered Row
+    #              |  Uncovered Column  ||   Covered Column
+    #              |    change: -h      ||     change: 0
+    #              | produce new zeros  ||     no change
+    #              |                    ||
+    # since we always apply add/substract h to a whole row/column, it's unnecessary
+    # to apply every operation to every entry of A's row/column, we only need a row
+    # and a column vector to keep tracking those changes and use it when necessary.
 
+    # find h and track the location of those new zeros
     h = typemax(Ti)
     uncoveredRowInds = find(!, rowCovered)
     uncoveredColumnInds = find(!, columnCovered)
     minLocations = Int[]
+
+    # uncoveredA = view(A, uncoveredRowInds, uncoveredColumnInds)
+    #
+    # idx = start(uncoveredA)
+    # idxMin = i = 1
+    # val, idx = next(uncoveredA, idx)
+    # while !done(uncoveredA, s)
+    #     valNext, idx = next(uncoveredA, idx)
+    #     i += 1
+    #     if valNext < val
+    #         val = valNext
+    #         idxMin = i
+    #     end
+    # end
     for j in uncoveredColumnInds, i in uncoveredRowInds
-        @inbounds cost = A[i,j]
+        @inbounds cost = A[i,j] + Δcolumn[j] + Δrow[i]
         if cost < h
             h = Ti(cost)
             empty!(minLocations)
@@ -286,29 +316,16 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: 
         end
     end
 
-    # "add h to each covered row;"
     coveredRowInds = find(rowCovered)
-    for j = 1:size(A,2), i in coveredRowInds
-        @inbounds A[i,j] += h
+    for i in coveredRowInds
+        Δrow[i] += h
     end
 
-    # "then subtract h from each uncovered column."
-    for j in uncoveredColumnInds, i = 1:size(A,1)
-        @inbounds A[i,j] -= h
+    for i in uncoveredColumnInds
+        Δcolumn[i] -= h
     end
 
     # mark new zeros in Zs and remove those elements that will no longer be zero
-    #             -h                    ||
-    #              |     no change      || reduce old zeros
-    #              | change:(+h)+(-h)=0 ||     change: +h
-    #       +h ---------Covered Row-----||----Covered Row--------
-    #              |  Uncovered Column  ||  Covered Column
-    #==============|====================||================================#
-    #              |   Uncovered Row    ||   Uncovered Row
-    #              |  Uncovered Column  ||  Covered Column
-    #              |    change: -h      ||    change: 0
-    #              | produce new zeros  ||    no change
-    #              |                    ||
     # produce new zeros
     for i = 1:2:length(minLocations)
         Zs[minLocations[i], minLocations[i+1]] = Z
@@ -318,10 +335,9 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, columnCovered) where T <: 
     rows = rowvals(Zs)
     for c in coveredColumnInds, i in nzrange(Zs, c)
         r = rows[i]
-        if rowCovered[r]
-            Zs[r,c] = NON
-        end
+        rowCovered[r] && (Zs[r,c] = NON;)
     end
+
     dropzeros!(Zs)
 
     # "return to step 1."
