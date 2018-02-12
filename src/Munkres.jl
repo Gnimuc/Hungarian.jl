@@ -32,7 +32,7 @@ munkres(costMat::AbstractMatrix{T}) where {T<:Real} = munkres!(copy(costMat))
     munkres!(costMat) -> Zs
 
 Identical to `munkres`, except that it directly modifies its input matrix `costMat`
-instead of allocating a copy. As a result, the value of this matrix in the caller
+instead of allocating a copy. *As a result, the value of this matrix in the caller
 code will be modified and should therefore no more be used!* This function should
 rather be used by advanced users to improve performance of critical code.
 """

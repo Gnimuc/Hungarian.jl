@@ -46,12 +46,12 @@ julia> assignment, cost = hungarian(A')
 julia> using Missings
 
 julia> costMat = [ missing  1   1
-                    1   0   1
-                    1   1   0 ]
+                      1     0   1
+                      1     1   0 ]
 3×3 Array{Union{Float64, Missings.Missing},2}:
-  missing  1.0  1.0
- 1.0       0.0  1.0
- 1.0       1.0  0.0
+missing  1.0  1.0
+  1.0    0.0  1.0
+  1.0    1.0  0.0
 
 julia> hungarian(costMat)
 ([2, 1, 3], 2)
@@ -59,13 +59,24 @@ julia> hungarian(costMat)
 
 """
 function hungarian(costMat::AbstractMatrix)
-    r, c = size(costMat)
-    # r != c && warn("Currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.")
-    costMatrix = r ≤ c ? costMat : costMat'
+    rowNum, colNum = size(costMat)
+    # currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.
+    costMatrix = rowNum ≤ colNum ? costMat : costMat'
     matching = munkres(costMatrix)
-    assignment = r ≤ c ? findn(matching' .== STAR)[1] : [findfirst(matching[:,i] .== STAR) for i = 1:r]
+    assignment = zeros(Int, rowNum)
+    rows = rowvals(matching)
+    for c = 1:size(matching,2), i in nzrange(matching, c)
+        r = rows[i]
+        if matching[r,c] == STAR
+            if rowNum ≤ colNum
+                assignment[r] = c
+            else
+                assignment[c] = r
+            end
+        end
+    end
     # calculate minimum cost
-    cost = sum(costMat[i...] for i in zip(1:r, assignment) if i[2] != 0)
+    cost = sum(costMat[i...] for i in zip(1:rowNum, assignment) if i[2] != 0)
     return assignment, cost
 end
 

@@ -153,6 +153,16 @@ end
     @test assignH == assignM
 end
 
+@testset "issue #6" begin
+    # load the cost matrix produced from the `solve_LSAP` function contained in the
+    # [clue package](https://cran.r-project.org/web/packages/clue/index.html) in R.
+    costMatrix = readdlm(joinpath(@__DIR__, "R-clue-cost.txt"))
+    assignmentH, costH = hungarian(costMatrix.')  # note the transpose
+    assignmentR = vec(readdlm(joinpath(@__DIR__, "R-clue-solution.txt"), Int64))
+    costR = sum(costMatrix[ii, assignmentR[ii]] for ii in 1:size(costMatrix,1))
+    @test costH ≤ costR
+end
+
 @testset "issue #9" begin
     A = UInt8[ 49 107  64  23 232 139  21  72 124 125 197 226  45  99 106;
               152 106  95 138 109 171  45  11 173  57 129 223   6 242 116;
