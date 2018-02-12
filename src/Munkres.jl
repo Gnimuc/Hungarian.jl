@@ -40,6 +40,16 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
     Δrow = zeros(size(A,1))
     Δcol = zeros(size(A,2))
 
+    # for tracking indices
+    rowCoveredIdx = Int[]
+    colCoveredIdx = Int[]
+    rowUncoveredIdx = Int[]
+    colUncoveredIdx = Int[]
+    sizehint!(rowCoveredIdx, size(A,1))
+    sizehint!(colCoveredIdx, size(A,2))
+    sizehint!(rowUncoveredIdx, size(A,1))
+    sizehint!(colUncoveredIdx, size(A,2))
+
     # "no zeros are starred or primed."
     # use a sparse matrix Zs to store these three kinds of zeros:
     # 0 => NON   => Non-zero
@@ -98,7 +108,7 @@ function munkres(costMat::AbstractMatrix{T}) where T <: Real
         elseif stepNum == 2
             stepNum = step2!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
         elseif stepNum == 3
-            stepNum = step3!(A, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol)
+            stepNum = step3!(A, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
         end
     end
 
@@ -269,7 +279,8 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol) where T <: Real
+function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR,
+                Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx) where T <: Real
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;
     #  add h to each covered row; then subtract h from each uncovered column."
@@ -289,12 +300,22 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2c
     # and a column vector to keep tracking those changes and use it when necessary.
 
     # find h and track the location of those new zeros
-    h = Inf
-    uncoveredRowInds = find(!, rowCovered)
-    uncoveredColumnInds = find(!, colCovered)
-    minLocations = Tuple{Int,Int}[]
+    empty!(rowCoveredIdx)
+    empty!(colCoveredIdx)
+    empty!(rowUncoveredIdx)
+    empty!(colUncoveredIdx)
 
-    @inbounds for j in uncoveredColumnInds, i in uncoveredRowInds
+    for i in eachindex(rowCovered)
+        rowCovered[i] ? push!(rowCoveredIdx, i) : push!(rowUncoveredIdx, i)
+    end
+
+    for i in eachindex(colCovered)
+        colCovered[i] ? push!(colCoveredIdx, i) : push!(colUncoveredIdx, i)
+    end
+
+    h = Inf
+    minLocations = Tuple{Int,Int}[]
+    @inbounds for j in colUncoveredIdx, i in rowUncoveredIdx
         cost = A[i,j] + Δcol[j] + Δrow[i]
         if cost <= h
             if cost != h
@@ -305,12 +326,11 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2c
         end
     end
 
-    coveredRowInds = find(rowCovered)
-    for i in coveredRowInds
+    for i in rowCoveredIdx
         Δrow[i] += h
     end
 
-    for i in uncoveredColumnInds
+    for i in colUncoveredIdx
         Δcol[i] -= h
     end
 
@@ -320,9 +340,8 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2c
         Zs[loc...] = Z
     end
     # reduce old zeros
-    coveredColumnInds = find(colCovered)
     rows = rowvals(Zs)
-    for c in coveredColumnInds, i in nzrange(Zs, c)
+    for c in colCoveredIdx, i in nzrange(Zs, c)
         r = rows[i]
         if rowCovered[r]
             if Zs[r,c] == STAR
