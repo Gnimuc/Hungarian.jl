@@ -26,40 +26,38 @@ julia> full(matching)
  0  0  2
 ```
 """
-function munkres(costMat::AbstractMatrix{T}) where T <: Real
-    A = copy(costMat)
-    return munkres!(A)
-end
+munkres(costMat::AbstractMatrix{T}) where {T<:Real} = munkres!(copy(costMat))
 
 """
-    munkres(costMat) -> Zs
+    munkres!(costMat) -> Zs
 
 Identical to `munkres`, except that it directly modifies its input matrix `costMat`
-instead of allocating a copy. *As a result, the value of this matrix in the caller 
-code will be modified and should therefore no more be used!* This function should 
-rather be used by advanced users to improve performance of critical code. 
+instead of allocating a copy. As a result, the value of this matrix in the caller
+code will be modified and should therefore no more be used!* This function should
+rather be used by advanced users to improve performance of critical code.
 """
-function munkres!(A::AbstractMatrix{T}) where T <: Real
-    size(A,2) ≥ size(A,1) || throw(ArgumentError("Non-square matrix should have more columns than rows."))
+function munkres!(costMat::AbstractMatrix{T}) where T <: Real
+    rowNum, colNum = size(costMat)
+    colNum ≥ rowNum || throw(ArgumentError("Non-square matrix should have more columns than rows."))
 
     # preliminaries:
     # "no lines are covered;"
-    rowCovered = falses(size(A,1))
-    colCovered = falses(size(A,2))
+    rowCovered = falses(rowNum)
+    colCovered = falses(colNum)
 
     # for tracking changes per row/col of A
-    Δrow = zeros(size(A,1))
-    Δcol = zeros(size(A,2))
+    Δrow = zeros(rowNum)
+    Δcol = zeros(colNum)
 
     # for tracking indices
     rowCoveredIdx = Int[]
     colCoveredIdx = Int[]
     rowUncoveredIdx = Int[]
     colUncoveredIdx = Int[]
-    sizehint!(rowCoveredIdx, size(A,1))
-    sizehint!(colCoveredIdx, size(A,2))
-    sizehint!(rowUncoveredIdx, size(A,1))
-    sizehint!(colUncoveredIdx, size(A,2))
+    sizehint!(rowCoveredIdx, rowNum)
+    sizehint!(colCoveredIdx, colNum)
+    sizehint!(rowUncoveredIdx, rowNum)
+    sizehint!(colUncoveredIdx, colNum)
 
     # "no zeros are starred or primed."
     # use a sparse matrix Zs to store these three kinds of zeros:
@@ -67,24 +65,27 @@ function munkres!(A::AbstractMatrix{T}) where T <: Real
     # 1 => Z     => ordinary zero
     # 2 => STAR  => starred zero
     # 3 => PRIME => primed zero
-    Zs = spzeros(Int8, size(A)...)
+    Zs = spzeros(Int8, rowNum, colNum)
 
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
-    A .-= minimum(A, 2)
+    costMat .-= minimum(costMat, 2)
 
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
-    # Note that, this step should be removed if the input matrix is not square.
-    # A .-= minimum(A, 1)
+    # Note that, this step should be omitted if the input matrix is not square.
+    rowNum == colNum && (costMat .-= minimum(costMat, 1);)
 
-    rowSTAR = falses(size(A,1))
-    colSTAR = falses(size(A,2))
+    # for tracking those starred zero
+    rowSTAR = falses(rowNum)
+    colSTAR = falses(colNum)
+    # since looping through a row in a SparseMatrixCSC is costy(not cache-friendly),
+    # a row to column index mapping of starred zeros is also tracked here.
     row2colSTAR = Dict{Int,Int}()
-    for ii in CartesianRange(size(A))
+    for ii in CartesianRange(size(costMat))
         # "consider a zero Z of the matrix;"
-        if A[ii] == 0
+        if costMat[ii] == 0
             Zs[ii] = Z
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
@@ -104,11 +105,11 @@ function munkres!(A::AbstractMatrix{T}) where T <: Real
     stepNum = 1
 
     # if the assignment is already found, exit
-    # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
-    # so only K columns are counted here, where K = min(size(Zs))
-    if length(find(colCovered)) == minimum(size(Zs))
-        stepNum = 0
-    end
+    stepNum = exit_criteria(colCovered, size(Zs))
+
+    # pre-allocation
+    sequence = Tuple{Int,Int}[]       # used in step 2
+    minLocations = Tuple{Int,Int}[]   # used in step 3
 
     # these three steps are parallel with those in the paper:
     # J. Munkres, "Algorithms for the Assignment and Transportation Problems",
@@ -117,9 +118,15 @@ function munkres!(A::AbstractMatrix{T}) where T <: Real
         if stepNum == 1
             stepNum = step1!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
         elseif stepNum == 2
-            stepNum = step2!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
+            empty!(sequence)
+            stepNum = step2!(Zs, sequence, rowCovered, colCovered, rowSTAR, row2colSTAR)
         elseif stepNum == 3
-            stepNum = step3!(A, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
+            empty!(rowCoveredIdx)
+            empty!(colCoveredIdx)
+            empty!(rowUncoveredIdx)
+            empty!(colUncoveredIdx)
+            empty!(minLocations)
+            stepNum = step3!(costMat, Zs, minLocations, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
         end
     end
 
@@ -146,6 +153,26 @@ function munkres(costMat::AbstractMatrix{S}) where {T <: Real, S <: Union{Missin
 
     return assignment
 end
+
+"""
+    exit_criteria(colCovered, ZsDims) -> stepNum
+We adjust Munkres's algorithm in order to deal with rectangular matrices,
+so only K columns are counted here, where K = min(size(Zs))
+"""
+function exit_criteria(colCovered, ZsDims)
+    count = 0
+    @inbounds for i in eachindex(colCovered)
+        colCovered[i] && (count += 1;)
+    end
+    if count == ZsDims[1]
+        # algorithm exits
+        return 0
+    else
+        # "otherwise, return to step 1."
+        return 1
+    end
+end
+
 
 """
 Step 1 of the original Munkres' Assignment Algorithm
@@ -187,11 +214,10 @@ end
 """
 Step 2 of the original Munkres' Assignment Algorithm
 """
-function step2!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
+function step2!(Zs, sequence, rowCovered, colCovered, rowSTAR, row2colSTAR)
     ZsDims = size(Zs)
     rows = rowvals(Zs)
     # step 2:
-    sequence = Tuple{Int,Int}[]
     flag = false
     # "there is a sequence of alternating primed and starred zeros, constructed
     #  as follows:"
@@ -223,7 +249,7 @@ function step2!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
     while flag
         flag = false
         r = sequence[end][1]
-        # find Z₂ in Z₃'s row (always exists)
+        # find Z₂ in Z₃'s row (always exits)
         for c = 1:ZsDims[2]
             if Zs[r,c] == PRIME
                 # push Z₂ into the sequence
@@ -276,21 +302,13 @@ function step2!(Zs, rowCovered, colCovered, rowSTAR, row2colSTAR)
     fill!(rowCovered, false)
 
     # "if all columns are covered, the starred zeros form the desired independent set."
-    # here we adjust Munkres's algorithm in order to deal with rectangular matrices,
-    # so only K columns are counted here, where K = min(size(Zs))
-    if length(find(colCovered)) == minimum(size(Zs))
-        # algorithm exits
-        return 0
-    else
-        # "otherwise, return to step 1."
-        return 1
-    end
+    return exit_criteria(colCovered, ZsDims)
 end
 
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR,
+function step3!(costMat::AbstractMatrix{T}, Zs, minLocations, rowCovered, colCovered, rowSTAR, row2colSTAR,
                 Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx) where T <: Real
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;
@@ -311,23 +329,17 @@ function step3!(A::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2c
     # and a column vector to keep tracking those changes and use it when necessary.
 
     # find h and track the location of those new zeros
-    empty!(rowCoveredIdx)
-    empty!(colCoveredIdx)
-    empty!(rowUncoveredIdx)
-    empty!(colUncoveredIdx)
-
-    for i in eachindex(rowCovered)
+    @inbounds for i in eachindex(rowCovered)
         rowCovered[i] ? push!(rowCoveredIdx, i) : push!(rowUncoveredIdx, i)
     end
 
-    for i in eachindex(colCovered)
+    @inbounds for i in eachindex(colCovered)
         colCovered[i] ? push!(colCoveredIdx, i) : push!(colUncoveredIdx, i)
     end
 
     h = Inf
-    minLocations = Tuple{Int,Int}[]
     @inbounds for j in colUncoveredIdx, i in rowUncoveredIdx
-        cost = A[i,j] + Δcol[j] + Δrow[i]
+        cost = costMat[i,j] + Δcol[j] + Δrow[i]
         if cost <= h
             if cost != h
                 h = cost
