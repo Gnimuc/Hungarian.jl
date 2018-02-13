@@ -1,10 +1,10 @@
 ## Benchmark Results
 ```julia
 julia> versioninfo()
-Julia Version 0.6.1-pre.0
-Commit dcf39a1dda* (2017-06-19 13:06 UTC)
+Julia Version 0.6.2
+Commit d386e40c17 (2017-12-13 18:08 UTC)
 Platform Info:
-  OS: macOS (x86_64-apple-darwin16.6.0)
+  OS: macOS (x86_64-apple-darwin14.5.0)
   CPU: Intel(R) Core(TM) i5-6267U CPU @ 2.90GHz
   WORD_SIZE: 64
   BLAS: libopenblas (USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell)
