@@ -2,6 +2,6 @@
 *.jl.*.cov
 *.jl.mem
 
-*.ipynb
-.ipynb_checkpoints*
-jlprofile.ipynb
+benchmark/benchmark.md
+benchmark/judgement.md
+profile.jl
