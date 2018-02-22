@@ -12,6 +12,7 @@ const STAR = Int8(2)
 const PRIME = Int8(3)
 
 using Missings
+using Base.Threads
 
 include("./Munkres.jl")
 

@@ -109,7 +109,6 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
 
     # pre-allocation
     sequence = Tuple{Int,Int}[]       # used in step 2
-    minLocations = Tuple{Int,Int}[]   # used in step 3
 
     # these three steps are parallel with those in the paper:
     # J. Munkres, "Algorithms for the Assignment and Transportation Problems",
@@ -125,8 +124,7 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
             empty!(colCoveredIdx)
             empty!(rowUncoveredIdx)
             empty!(colUncoveredIdx)
-            empty!(minLocations)
-            stepNum = step3!(costMat, Zs, minLocations, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
+            stepNum = step3!(costMat, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
         end
     end
 
@@ -308,7 +306,7 @@ end
 """
 Step 3 of the original Munkres' Assignment Algorithm
 """
-function step3!(costMat::AbstractMatrix{T}, Zs, minLocations, rowCovered, colCovered, rowSTAR, row2colSTAR,
+function step3!(costMat::AbstractMatrix{T}, Zs, rowCovered, colCovered, rowSTAR, row2colSTAR,
                 Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx) where T <: Real
     # step 3(Step C):
     # "let h denote the smallest uncovered element of the matrix;
@@ -337,17 +335,26 @@ function step3!(costMat::AbstractMatrix{T}, Zs, minLocations, rowCovered, colCov
         colCovered[i] ? push!(colCoveredIdx, i) : push!(colUncoveredIdx, i)
     end
 
-    h = Inf
-    @inbounds for j in colUncoveredIdx, i in rowUncoveredIdx
-        cost = costMat[i,j] + Δcol[j] + Δrow[i]
-        if cost <= h
-            if cost != h
-                h = cost
-                empty!(minLocations)
+    hList = fill(Inf, nthreads())
+    minLocationsList = Vector(nthreads())
+    for i in eachindex(minLocationsList)
+        minLocationsList[i] = Vector{Tuple{Int,Int}}()
+    end
+    @threads for j in colUncoveredIdx
+        for i in rowUncoveredIdx
+            id = threadid()
+            @inbounds cost = costMat[i,j] + Δcol[j] + Δrow[i]
+            if cost <= hList[id]
+                if cost != hList[id]
+                    hList[id] = cost
+                    empty!(minLocationsList[id])
+                end
+                push!(minLocationsList[id], (i,j))
             end
-            push!(minLocations, (i,j))
         end
     end
+    h, idx = findmin(hList)
+    minLocations = minLocationsList[idx]
 
     for i in rowCoveredIdx
         Δrow[i] += h
