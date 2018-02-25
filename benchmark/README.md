@@ -3,7 +3,6 @@ The following snippets can be used for generating benchmarks on your own machine
 
 ## Generate benchmark report
 ```julia
-# note that, you may need to checkout PkgBenchmark's master(version number > 0.0.2)
 using PkgBenchmark
 
 # run benchmarks
@@ -58,7 +57,6 @@ url = get(posted_gist.html_url)
 
 ## Generate judgement report
 ```julia
-# note that, you may need to checkout PkgBenchmark's master(version number > 0.0.2)
 using PkgBenchmark
 
 # run benchmarks
@@ -72,7 +70,6 @@ export_markdown(joinpath(Pkg.dir("Hungarian"), "benchmark", "judgement.md"), res
 
 ## Comparing with Munkres.jl
 ```julia
-# note that, you may need to checkout PkgBenchmark's master(version number > 0.0.2)
 using PkgBenchmark
 
 # run benchmarks
