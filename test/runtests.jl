@@ -1,5 +1,5 @@
 using Hungarian
-using Base.Test
+using Test
 
 @testset "simple examples" begin
     A = [ 0.891171  0.0320582   0.564188  0.8999    0.620615;
