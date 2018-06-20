@@ -4,13 +4,12 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/8ym5dy9navw9hmd8?svg=true)](https://ci.appveyor.com/project/Gnimuc/hungarian-jl)
 [![codecov.io](http://codecov.io/github/Gnimuc/Hungarian.jl/coverage.svg?branch=master)](http://codecov.io/github/Gnimuc/Hungarian.jl?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/Gnimuc/Hungarian.jl/badge.svg?branch=master)](https://coveralls.io/github/Gnimuc/Hungarian.jl?branch=master)
-[![Hungarian](http://pkg.julialang.org/badges/Hungarian_0.6.svg)](http://pkg.julialang.org/detail/Hungarian)
 
 The package provides one implementation of the **[Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm)**(*Kuhn-Munkres algorithm*) based on its matrix interpretation. This implementation uses a sparse matrix to keep tracking those marked zeros, so it costs less time and memory than [Munkres.jl](https://github.com/FugroRoames/Munkres.jl). Benchmark details can be found [here](https://github.com/Gnimuc/Hungarian.jl/tree/master/benchmark).
 
 ## Installation
 ```julia
-Pkg.add("Hungarian")
+pkg> add Hungarian
 ```
 
 ## Quick start
@@ -42,45 +41,41 @@ When solving a canonical assignment problem, namely, the cost matrix is square, 
 julia> using Hungarian
 
 julia> matching = Hungarian.munkres(rand(5,5))
-5×5 sparse matrix with 9 Int64 nonzero entries:
-	[2, 1]  =  1
-	[5, 1]  =  2
-	[1, 2]  =  2
-	[5, 2]  =  1
-	[4, 3]  =  2
-	[2, 4]  =  2
-	[4, 4]  =  1
-	[1, 5]  =  1
-	[3, 5]  =  2
+5×5 SparseArrays.SparseMatrixCSC{Int8,Int64} with 7 stored entries:
+  [1, 1]  =  1
+  [5, 1]  =  2
+  [1, 2]  =  2
+  [2, 3]  =  2
+  [2, 4]  =  1
+  [3, 4]  =  2
+  [4, 5]  =  2
 
 # 0 => non-zero
 # 1 => zero
 # 2 => STAR
-julia> full(matching)
-5×5 Array{Int64,2}:
- 0  2  0  0  1
- 1  0  0  2  0
- 0  0  0  0  2
+julia> Matrix(matching)
+5×5 Array{Int8,2}:
+ 1  2  0  0  0
  0  0  2  1  0
- 2  1  0  0  0
+ 0  0  0  2  0
+ 0  0  0  0  2
+ 2  0  0  0  0
 
-# against column
 julia> [findfirst(matching[i,:].==Hungarian.STAR) for i = 1:5]
 5-element Array{Int64,1}:
  2
+ 3
  4
  5
- 3
  1
 
-# against row
 julia> [findfirst(matching[:,i].==Hungarian.STAR) for i = 1:5]
 5-element Array{Int64,1}:
  5
  1
- 4
  2
  3
+ 4
 ```
 
 ## References
