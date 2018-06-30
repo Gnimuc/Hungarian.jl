@@ -70,12 +70,12 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
-    costMat .-= minimum(costMat, 2)
+    costMat .-= minimum(costMat, dims=2)
 
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
     # Note that, this step should be omitted if the input matrix is not square.
-    rowNum == colNum && (costMat .-= minimum(costMat, 1);)
+    rowNum == colNum && (costMat .-= minimum(costMat, dims=1);)
 
     # for tracking those starred zero
     rowSTAR = falses(rowNum)
@@ -83,7 +83,7 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # since looping through a row in a SparseMatrixCSC is costy(not cache-friendly),
     # a row to column index mapping of starred zeros is also tracked here.
     row2colSTAR = Dict{Int,Int}()
-    for ii in CartesianRange(size(costMat))
+    for ii in CartesianIndices(size(costMat))
         # "consider a zero Z of the matrix;"
         if costMat[ii] == 0
             Zs[ii] = Z
@@ -271,7 +271,7 @@ function step2!(Zs, sequence, rowCovered, colCovered, rowSTAR, row2colSTAR)
     end
 
     # "unstar each starred zero of the sequence;"
-    for i in 2:2:endof(sequence)-1
+    for i in 2:2:length(sequence)-1
         Zs[sequence[i]...] = Z
     end
 
@@ -280,7 +280,7 @@ function step2!(Zs, sequence, rowCovered, colCovered, rowSTAR, row2colSTAR)
     empty!(row2colSTAR)
 
     # "and star each primed zero of the sequence."
-    for i in 1:2:endof(sequence)
+    for i in 1:2:length(sequence)
         Zs[sequence[i]...] = STAR
     end
 

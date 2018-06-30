@@ -1,5 +1,8 @@
 module Hungarian
 
+using LinearAlgebra
+using SparseArrays
+
 
 # Zero markers used in hungarian algorithm
 # 0 => NON   => Non-zero
@@ -10,8 +13,6 @@ const NON = Int8(0)
 const Z = Int8(1)
 const STAR = Int8(2)
 const PRIME = Int8(3)
-
-using Missings
 
 include("./Munkres.jl")
 
