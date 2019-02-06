@@ -1,8 +1,9 @@
 using BenchmarkTools
+using Random, Statistics
 using Hungarian
 using Munkres
 
-const seed = srand(7)
+const seed = Random.seed!(7)
 const SUITE = BenchmarkGroup()
 
 SUITE["Hungarian.jl"] = BenchmarkGroup()
