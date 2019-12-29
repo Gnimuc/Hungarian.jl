@@ -14,27 +14,27 @@ julia> show(results.benchmarkgroup["square"])
   tags: ["square-matrix"]
   "Float64" => 8-element BenchmarkTools.BenchmarkGroup:
       tags: ["float"]
-      "10 x 10" => Trial(9.087 μs)
-      "100 x 100" => Trial(1.384 ms)
-      "50 x 50" => Trial(301.392 μs)
-      "200 x 200" => Trial(7.373 ms)
-      "1000 x 1000" => Trial(815.554 ms)
-      "400 x 400" => Trial(54.179 ms)
-      "800 x 800" => Trial(386.477 ms)
-      "2000 x 2000" => Trial(6.374 s)
+      "10 x 10" => Trial(10.043 μs)
+      "100 x 100" => Trial(1.606 ms)
+      "50 x 50" => Trial(340.175 μs)
+      "200 x 200" => Trial(8.464 ms)
+      "1000 x 1000" => Trial(881.964 ms)
+      "400 x 400" => Trial(58.806 ms)
+      "800 x 800" => Trial(415.406 ms)
+      "2000 x 2000" => Trial(6.765 s)
   "UInt16" => 7-element BenchmarkTools.BenchmarkGroup:
       tags: ["integer"]
-      "8000 x 8000" => Trial(4.538 s)
-      "100 x 100" => Trial(1.353 ms)
-      "4000 x 4000" => Trial(1.622 s)
-      "500 x 500" => Trial(84.062 ms)
-      "1000 x 1000" => Trial(273.474 ms)
-      "16000 x 16000" => Trial(13.090 s)
-      "2000 x 2000" => Trial(651.013 ms)
+      "8000 x 8000" => Trial(4.307 s)
+      "100 x 100" => Trial(1.466 ms)
+      "4000 x 4000" => Trial(1.546 s)
+      "500 x 500" => Trial(81.331 ms)
+      "1000 x 1000" => Trial(259.793 ms)
+      "16000 x 16000" => Trial(12.263 s)
+      "2000 x 2000" => Trial(635.144 ms)
 
 # generate a detailed report in `benchmark` folder
 using Pkg
-export_markdown(joinpath(Pkg.dir("Hungarian"), "benchmark", "benchmark.md"), results)
+export_markdown(joinpath(dirname(pathof(Hungarian)), "..", "benchmark", "benchmark.md"), results)
 
 # or upload to Gist
 using GitHub
@@ -64,7 +64,7 @@ using Pkg, PkgBenchmark
 results = judge("Hungarian", "target-branch", "master")
 
 # generate a detailed report in `benchmark` folder
-export_markdown(joinpath(Pkg.dir("Hungarian"), "benchmark", "judgement.md"), results)
+export_markdown(joinpath(dirname(pathof(Hungarian)), "..", "benchmark", "judgement.md"), results)
 
 ```
 
@@ -75,7 +75,7 @@ using PkgBenchmark
 using Pkg, Random, Statistics
 
 # run benchmarks
-results = benchmarkpkg("Hungarian", "master", script = "$(Pkg.dir("Hungarian"))/benchmark/vsMunkres.jl")
+results = benchmarkpkg("Hungarian", "master", script = joinpath(dirname(pathof(Hungarian)), "..", "benchmark", "vsMunkres.jl"))
 hungarianResult = results.benchmarkgroup["Hungarian.jl"]
 munkresResult = results.benchmarkgroup["Munkres.jl"]
 
@@ -83,14 +83,14 @@ munkresResult = results.benchmarkgroup["Munkres.jl"]
 julia> judge(mean(hungarianResult), mean(munkresResult))
 8-element BenchmarkTools.BenchmarkGroup:
   tags: []
-  "10 x 10" => TrialJudgement(-79.16% => improvement)
-  "100 x 100" => TrialJudgement(-69.56% => improvement)
-  "50 x 50" => TrialJudgement(-62.03% => improvement)
-  "200 x 200" => TrialJudgement(-72.74% => improvement)
-  "1000 x 1000" => TrialJudgement(-83.15% => improvement)
-  "400 x 400" => TrialJudgement(-79.79% => improvement)
-  "800 x 800" => TrialJudgement(-85.31% => improvement)
-  "2000 x 2000" => TrialJudgement(-84.81% => improvement)
+  "10 x 10" => TrialJudgement(-45.14% => improvement)
+  "100 x 100" => TrialJudgement(-66.61% => improvement)
+  "50 x 50" => TrialJudgement(-52.84% => improvement)
+  "200 x 200" => TrialJudgement(-71.69% => improvement)
+  "1000 x 1000" => TrialJudgement(-84.79% => improvement)
+  "400 x 400" => TrialJudgement(-76.20% => improvement)
+  "800 x 800" => TrialJudgement(-82.02% => improvement)
+  "2000 x 2000" => TrialJudgement(-82.26% => improvement)
 ```
 
 ## Table: the average elapsed time

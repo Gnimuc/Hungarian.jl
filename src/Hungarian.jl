@@ -3,7 +3,6 @@ module Hungarian
 using LinearAlgebra
 using SparseArrays
 
-
 # Zero markers used in hungarian algorithm
 # 0 => NON   => Non-zero
 # 1 => Z     => ordinary zero
@@ -14,7 +13,7 @@ const Z = Int8(1)
 const STAR = Int8(2)
 const PRIME = Int8(3)
 
-include("./Munkres.jl")
+include("Munkres.jl")
 
 """
     hungarian(costMat) -> (assignment, cost)
