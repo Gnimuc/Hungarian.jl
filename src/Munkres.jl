@@ -63,10 +63,6 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # 3 => PRIME => primed zero
     Zs = spzeros(Int8, rowNum, colNum)
 
-    # "consider a row of the matrix A;
-    #  subtract from each element in this row the smallest element of this row.
-    #  do the same for each row."
-
     # for tracking changes per row/col of A
     Δrow = zeros(rowNum)
     Δcol = zeros(colNum)
