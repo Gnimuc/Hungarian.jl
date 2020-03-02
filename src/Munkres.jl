@@ -26,7 +26,7 @@ julia> full(matching)
  0  0  2
 ```
 """
-munkres(costMat::AbstractMatrix{T}) where {T<:Real} = munkres!(copy(costMat))
+munkres(costMat::AbstractMatrix{T}) where {T<:Real} = munkres!(costMat)
 
 """
     munkres!(costMat) -> Zs
@@ -70,12 +70,35 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
-    costMat .-= minimum(costMat, dims=2)
 
-    # "then consider each column of the resulting matrix and subtract from each
-    #  column its smallest entry."
-    # Note that, this step should be omitted if the input matrix is not square.
-    rowNum == colNum && (costMat .-= minimum(costMat, dims=1);)
+    # for tracking changes per row/col of A
+    Δrow = zeros(rowNum)
+    Δcol = zeros(colNum)
+
+    # "subtract" minimum from each row
+    for i in 1:rowNum
+        mw=typemax(T)
+        for j in 1:colNum
+            cost=costMat[i,j]+Δrow[i]+Δcol[j]
+            if cost<mw
+                mw=cost
+            end
+        end
+        Δrow[i] = -mw
+    end
+    # "subtract" minimum from each column
+    if rowNum == colNum
+        for j in 1:colNum
+            mw=typemax(T)
+            for i in 1:rowNum
+                cost=costMat[i,j]+Δrow[i]+Δcol[j]
+                if cost<mw
+                    mw=cost
+                end
+            end
+            Δcol[j] = -mw
+        end
+    end
 
     # for tracking those starred zero
     rowSTAR = falses(rowNum)
