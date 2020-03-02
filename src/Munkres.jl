@@ -45,10 +45,6 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     rowCovered = falses(rowNum)
     colCovered = falses(colNum)
 
-    # for tracking changes per row/col of A
-    Δrow = zeros(rowNum)
-    Δcol = zeros(colNum)
-
     # for tracking indices
     rowCoveredIdx = Int[]
     colCoveredIdx = Int[]
