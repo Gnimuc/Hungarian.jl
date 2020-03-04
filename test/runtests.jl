@@ -54,3 +54,25 @@ end
     costR = sum(costMatrix[ii, assignmentR[ii]] for ii in 1:size(costMatrix,1))
     @test costH ≤ costR
 end
+
+@testset "UInt16" begin
+    M=UInt16[28092 44837 19882 39481 59139; 
+             26039 46258 38932 51057 9; 
+             11527 59487 61993 29072 8734; 
+             10691 16977 12796 16370 14266; 
+             5199  42319 34194 41332 16472]
+    assign,cost=hungarian(M)
+    @test assign == [3, 5, 4, 2, 1]
+    @tets cost   == 71139
+end
+
+@testset "UInt8" begin
+    M=UInt8[67  228 135 197 244; 
+            112 44  84  206 31; 
+            225 103 231 225 227; 
+            170 37  135 9   130; 
+            110 22  133 77  96]
+    assign,cost=hungarian(M)
+    @test assign == [1, 5, 2, 4, 3]
+    @tets cost   == 343
+end
