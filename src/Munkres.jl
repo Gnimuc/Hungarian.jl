@@ -70,30 +70,34 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
-    for i in 1:rowNum
+    @inbounds for i in 1:rowNum
         mw=typemax(T)
-        for j in 1:colNum
-            cost=costMat[i,j]+Δrow[i]+Δcol[j]
+        @inbounds for j in 1:colNum
+            cost=costMat[i,j]#+Δrow[i]+Δcol[j]
+	    iszero(cost) && @goto skip1
             if cost<mw
                 mw=cost
             end
         end
         Δrow[i] = -mw
+	@label skip1 
     end
 	
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
     # Note that, this step should be omitted if the input matrix is not square.
     if rowNum == colNum
-        for j in 1:colNum
+        @inbounds for j in 1:colNum
             mw=typemax(T)
-            for i in 1:rowNum
-                cost=costMat[i,j]+Δrow[i]+Δcol[j]
+            @inbounds for i in 1:rowNum
+                cost=costMat[i,j]+Δrow[i]#+Δcol[j]
+		iszero(cost) && @goto skip2
                 if cost<mw
                     mw=cost
                 end
             end
             Δcol[j] = -mw
+	    @label skip2
         end
     end
 
