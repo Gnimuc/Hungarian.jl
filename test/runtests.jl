@@ -63,7 +63,7 @@ end
              5199  42319 34194 41332 16472]
     assign,cost=hungarian(M)
     @test assign == [3, 5, 4, 2, 1]
-    @tets cost   == 71139
+    @test cost   == 71139
 end
 
 @testset "UInt8" begin
@@ -74,5 +74,5 @@ end
             110 22  133 77  96]
     assign,cost=hungarian(M)
     @test assign == [1, 5, 2, 4, 3]
-    @tets cost   == 343
+    @test cost   == 343
 end
