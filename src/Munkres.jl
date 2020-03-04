@@ -64,8 +64,8 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     Zs = spzeros(Int8, rowNum, colNum)
 
     # for tracking changes per row/col of A
-    Δrow = zeros(rowNum)
-    Δcol = zeros(colNum)
+    Δrow = zeros(T,rowNum)
+    Δcol = zeros(T,colNum)
 	
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
@@ -357,7 +357,7 @@ function step3!(costMat::AbstractMatrix{T}, Zs, minLocations, rowCovered, colCov
         colCovered[i] ? push!(colCoveredIdx, i) : push!(colUncoveredIdx, i)
     end
 
-    h = Inf
+    h = typemax(T)
     @inbounds for j in colUncoveredIdx, i in rowUncoveredIdx
         cost = costMat[i,j] + Δcol[j] + Δrow[i]
         if cost <= h
