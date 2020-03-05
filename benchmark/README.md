@@ -13,35 +13,35 @@ julia> show(results.benchmarkgroup["square"])
 2-element BenchmarkTools.BenchmarkGroup:
   tags: ["square-matrix"]
   "Float64" => 8-element BenchmarkTools.BenchmarkGroup:
-      tags: ["float"]
-      "10 x 10" => Trial(10.043 μs)
-      "100 x 100" => Trial(1.606 ms)
-      "50 x 50" => Trial(340.175 μs)
-      "200 x 200" => Trial(8.464 ms)
-      "1000 x 1000" => Trial(881.964 ms)
-      "400 x 400" => Trial(58.806 ms)
-      "800 x 800" => Trial(415.406 ms)
-      "2000 x 2000" => Trial(6.765 s)
+	  tags: ["float"]
+	  "10 x 10" => Trial(6.007 μs)
+	  "100 x 100" => Trial(1.551 ms)
+	  "50 x 50" => Trial(327.488 μs)
+	  "200 x 200" => Trial(8.275 ms)
+	  "1000 x 1000" => Trial(896.550 ms)
+	  "400 x 400" => Trial(57.587 ms)
+	  "800 x 800" => Trial(440.901 ms)
+	  "2000 x 2000" => Trial(7.552 s)
   "UInt16" => 7-element BenchmarkTools.BenchmarkGroup:
-      tags: ["integer"]
-      "8000 x 8000" => Trial(4.307 s)
-      "100 x 100" => Trial(1.466 ms)
-      "4000 x 4000" => Trial(1.546 s)
-      "500 x 500" => Trial(81.331 ms)
-      "1000 x 1000" => Trial(259.793 ms)
-      "16000 x 16000" => Trial(12.263 s)
-      "2000 x 2000" => Trial(635.144 ms)
+	  tags: ["integer"]
+	  "8000 x 8000" => Trial(9.220 s)
+	  "100 x 100" => Trial(1.336 ms)
+	  "4000 x 4000" => Trial(2.150 s)
+	  "500 x 500" => Trial(66.783 ms)
+	  "1000 x 1000" => Trial(211.711 ms)
+	  "16000 x 16000" => Trial(23.434 s)
+	  "2000 x 2000" => Trial(555.510 ms)
 
 # generate a detailed report in `benchmark` folder
-using Pkg
+using Pkg, Hungarian
 export_markdown(joinpath(dirname(pathof(Hungarian)), "..", "benchmark", "benchmark.md"), results)
 
 # or upload to Gist
-using GitHub
+using GitHub, JSON
 gist_json = JSON.parse(
                    """
                    {
-                   "description": "A benchmark for PkgBenchmark",
+                   "description": "A benchmark for Hungarian",
                    "public": true,
                    "files": {
                        "benchmark.md": {
@@ -58,7 +58,7 @@ url = get(posted_gist.html_url)
 
 ## Generate judgement report
 ```julia
-using Pkg, PkgBenchmark
+using Pkg, PkgBenchmark, Hungarian
 
 # run benchmarks
 results = judge("Hungarian", "target-branch", "master")
@@ -83,14 +83,14 @@ munkresResult = results.benchmarkgroup["Munkres.jl"]
 julia> judge(mean(hungarianResult), mean(munkresResult))
 8-element BenchmarkTools.BenchmarkGroup:
   tags: []
-  "10 x 10" => TrialJudgement(-45.14% => improvement)
-  "100 x 100" => TrialJudgement(-66.61% => improvement)
-  "50 x 50" => TrialJudgement(-52.84% => improvement)
-  "200 x 200" => TrialJudgement(-71.69% => improvement)
-  "1000 x 1000" => TrialJudgement(-84.79% => improvement)
-  "400 x 400" => TrialJudgement(-76.20% => improvement)
-  "800 x 800" => TrialJudgement(-82.02% => improvement)
-  "2000 x 2000" => TrialJudgement(-82.26% => improvement)
+  "10 x 10" => TrialJudgement(-82.74% => improvement)
+  "100 x 100" => TrialJudgement(-70.53% => improvement)
+  "50 x 50" => TrialJudgement(-58.36% => improvement)
+  "200 x 200" => TrialJudgement(-74.47% => improvement)
+  "1000 x 1000" => TrialJudgement(-79.98% => improvement)
+  "400 x 400" => TrialJudgement(-71.24% => improvement)
+  "800 x 800" => TrialJudgement(-78.40% => improvement)
+  "2000 x 2000" => TrialJudgement(-85.30% => improvement)
 ```
 
 ## Table: the average elapsed time
@@ -107,5 +107,5 @@ julia> judge(mean(hungarianResult), mean(munkresResult))
 
 A Matlab implementation of the algorithm is shown here as a rough baseline.
 
-(This table might be outdated, so don't take it so seriously, just treat it as a vague reference.
-I don't wanna keep updating these figures in the future, cause users can reproduce it with the above mentioned snippets on their own machine.)
+(This table ~~might be~~ *is* outdated, so don't take it so seriously, just treat it as a vague reference.
+I ~~don't wanna~~ cannot keep updating these figures because I don't have extra money to buy a Matlab license merely for this. Anyway, users can always reproduce these benchmark report using the above mentioned snippets on their own machine.)
