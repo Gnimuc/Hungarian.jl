@@ -61,7 +61,7 @@ julia> hungarian(costMat)
 function hungarian(costMat::AbstractMatrix)
     rowNum, colNum = size(costMat)
     # currently, the function `hungarian` automatically transposes `cost matrix` when there are more workers than jobs.
-    costMatrix = rowNum ≤ colNum ? costMat : transpose(costMat)
+    costMatrix = rowNum ≤ colNum ? costMat : copy(transpose(costMat))
     matching = munkres(costMatrix)
     assignment = zeros(Int, rowNum)
     rows = rowvals(matching)
