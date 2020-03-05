@@ -71,16 +71,14 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
     @inbounds for i in 1:rowNum
-        mw=typemax(T)
-        @inbounds for j in 1:colNum
-            cost=costMat[i,j]#+Δrow[i]+Δcol[j]
-	    iszero(cost) && @goto skip1
+        mw=costMat[i,1]
+        @inbounds for j in 2:colNum
+            cost=costMat[i,j]
             if cost<mw
                 mw=cost
             end
         end
         Δrow[i] = -mw
-	@label skip1 
     end
 	
     # "then consider each column of the resulting matrix and subtract from each
@@ -88,16 +86,14 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # Note that, this step should be omitted if the input matrix is not square.
     if rowNum == colNum
         @inbounds for j in 1:colNum
-            mw=typemax(T)
-            @inbounds for i in 1:rowNum
-                cost=costMat[i,j]+Δrow[i]#+Δcol[j]
-		iszero(cost) && @goto skip2
+            mw=costMat[1,j]+Δrow[1]
+            @inbounds for i in 2:rowNum
+                cost=costMat[i,j]+Δrow[i]
                 if cost<mw
                     mw=cost
                 end
             end
             Δcol[j] = -mw
-	    @label skip2
         end
     end
 
@@ -109,11 +105,12 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     row2colSTAR = Dict{Int,Int}()
     for ii in CartesianIndices(size(costMat))
         # "consider a zero Z of the matrix;"
-        if costMat[ii] == 0
-            Zs[ii] = Z
+        r, c = ii.I
+        cost=costMat[r,c]+Δrow[r]+Δcol[c]
+        if cost == 0
+            Zs[r,c] = Z
             # "if there is no starred zero in its row and none in its column, star Z.
             #  repeat, considering each zero in the matrix in turn;"
-            r, c = ii.I
             if !colSTAR[c] && !rowSTAR[r]
                 Zs[r,c] = STAR
                 rowSTAR[r] = true
