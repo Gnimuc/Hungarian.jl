@@ -66,34 +66,28 @@ function munkres!(costMat::AbstractMatrix{T}) where T <: Real
     # for tracking changes per row/col of A
     Δrow = zeros(T,rowNum)
     Δcol = zeros(T,colNum)
-	
+
     # "consider a row of the matrix A;
     #  subtract from each element in this row the smallest element of this row.
     #  do the same for each row."
     @inbounds for i in 1:rowNum
-        mw=costMat[i,1]
-        @inbounds for j in 2:colNum
-            cost=costMat[i,j]
-            if cost<mw
-                mw=cost
-            end
+        m = costMat[i,1]
+        @simd for j in 2:colNum
+            m = min(m, costMat[i,j])
         end
-        Δrow[i] = -mw
+        Δrow[i] = -m
     end
-	
+
     # "then consider each column of the resulting matrix and subtract from each
     #  column its smallest entry."
     # Note that, this step should be omitted if the input matrix is not square.
     if rowNum == colNum
         @inbounds for j in 1:colNum
-            mw=costMat[1,j]+Δrow[1]
-            @inbounds for i in 2:rowNum
-                cost=costMat[i,j]+Δrow[i]
-                if cost<mw
-                    mw=cost
-                end
+            m = costMat[1,j] + Δrow[1]
+            @simd for i in 2:rowNum
+                m = min(m, costMat[i,j] + Δrow[i])
             end
-            Δcol[j] = -mw
+            Δcol[j] = -m
         end
     end
 
