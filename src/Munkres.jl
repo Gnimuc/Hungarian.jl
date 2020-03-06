@@ -1,5 +1,3 @@
-@deprecate munkres!(costMat::AbstractMatrix{<:Real}) munkres(costMat::AbstractMatrix{<:Real})
-
 """
     munkres(costMat) -> Zs
 
