@@ -1,8 +1,7 @@
 # Hungarian
 
-[![Build Status](https://travis-ci.com/Gnimuc/Hungarian.jl.svg?branch=master)](https://travis-ci.com/Gnimuc/Hungarian.jl)
-![CI](https://github.com/Gnimuc/Hungarian.jl/workflows/CI/badge.svg)
-![TagBot](https://github.com/Gnimuc/Hungarian.jl/workflows/TagBot/badge.svg)
+[![CI](https://github.com/Gnimuc/Hungarian.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/Gnimuc/Hungarian.jl/actions/workflows/ci.yml)
+[![TagBot](https://github.com/Gnimuc/Hungarian.jl/actions/workflows/TagBot.yml/badge.svg)](https://github.com/Gnimuc/Hungarian.jl/actions/workflows/TagBot.yml)
 [![codecov.io](http://codecov.io/github/Gnimuc/Hungarian.jl/coverage.svg?branch=master)](http://codecov.io/github/Gnimuc/Hungarian.jl?branch=master)
 
 The package provides one implementation of the **[Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm)**(*Kuhn-Munkres algorithm*) based on its matrix interpretation. This implementation uses a sparse matrix to keep tracking those marked zeros, so it costs less time and memory than [Munkres.jl](https://github.com/FugroRoames/Munkres.jl). Benchmark details can be found [here](https://github.com/Gnimuc/Hungarian.jl/tree/master/benchmark).
