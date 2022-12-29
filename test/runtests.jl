@@ -65,6 +65,10 @@ end
     assign,cost=hungarian(M)
     @test assign == [3, 5, 4, 2, 1]
     @test cost   == 71139
+@testset "issue #18" begin
+    # These instances used to run into infinite loops.
+    weights_int = [1.0 Inf; Inf Inf]
+    result = Hungarian.munkres(weights_int)
 end
 
 @testset "UInt8" begin
