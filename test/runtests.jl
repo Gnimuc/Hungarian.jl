@@ -67,6 +67,14 @@ end
     @test cost   == 71139
 end
 
+@testset "issue #18" begin
+    # These instances used to run into infinite loops.
+    weights = [1.0 Inf; Inf Inf]
+    result = Hungarian.munkres(weights)
+    assign, cost = hungarian(weights)
+    @test cost == prevfloat(Inf)
+end
+
 @testset "UInt8" begin
     M=UInt8[67  228 135 197 244;
             112 44  84  206 31;
