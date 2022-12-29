@@ -120,7 +120,7 @@ julia> matching = Hungarian.munkres(weights)
 ```
 
 > **Note**
-> If some jobs or workers cannot be assigned to any worker or job, respectively, i.e. if some rows or columns only have infinite values (`typemax(T)` where `T` is the type of the elements of the cost matrix), the matrix returned by `Hungarian.munkres` will have zeroes for these rows and columns.
+> If some jobs or workers cannot be assigned to any worker or job, respectively, i.e. if some rows or columns only have `missing` or infinite values (`typemax(T)` where `T` is the type of the elements of the cost matrix), the matrix returned by `Hungarian.munkres` will have zeroes for these rows and columns.
 
 ## References
 1. J. Munkres, "Algorithms for the Assignment and Transportation Problems", Journal of the Society for Industrial and Applied Mathematics, 5(1):32–38, 1957 March.
