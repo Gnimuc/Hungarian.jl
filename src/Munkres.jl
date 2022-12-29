@@ -29,8 +29,8 @@ julia> full(matching)
 function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     # handle a corner case where some rows/columns cannot be matched
     costMatIsMax = costMat .== typemax(T)
-    unmatchableRows = findall(x -> x, vec(all(costMatIsMax, dims=2)))
-    unmatchableCols = findall(x -> x, vec(all(costMatIsMax, dims=1)))
+    unmatchableRows = findall(vec(all(costMatIsMax, dims=2)))
+    unmatchableCols = findall(vec(all(costMatIsMax, dims=1)))
 
     costMat = costMat[1:end .∉ [unmatchableRows], 1:end .∉ [unmatchableCols]]
     
