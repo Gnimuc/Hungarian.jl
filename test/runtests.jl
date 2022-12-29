@@ -56,6 +56,14 @@ end
     @test costH ≤ costR
 end
 
+@testset "issue #18" begin
+    # This instance used to run into infinite loops: a row and a column could never be matched.
+    weights = [1.0 Inf; Inf Inf]
+    assign, cost = hungarian(weights)
+    @test assign == [1, 0]
+    @test cost == 1.0
+end
+
 @testset "UInt16" begin
     M=UInt16[28092 44837 19882 39481 59139;
              26039 46258 38932 51057 9;
@@ -65,10 +73,6 @@ end
     assign,cost=hungarian(M)
     @test assign == [3, 5, 4, 2, 1]
     @test cost   == 71139
-@testset "issue #18" begin
-    # These instances used to run into infinite loops.
-    weights_int = [1.0 Inf; Inf Inf]
-    result = Hungarian.munkres(weights_int)
 end
 
 @testset "UInt8" begin

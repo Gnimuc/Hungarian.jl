@@ -27,6 +27,14 @@ julia> full(matching)
 ```
 """
 function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
+    # handle a corner case where some rows/columns cannot be matched
+    costMatIsMax = costMat .== typemax(T)
+    unmatchableRows = findall(x -> x, vec(all(costMatIsMax, dims=2)))
+    unmatchableCols = findall(x -> x, vec(all(costMatIsMax, dims=1)))
+
+    costMat = costMat[1:end .∉ [unmatchableRows], 1:end .∉ [unmatchableCols]]
+    
+    # check preconditions
     rowNum, colNum = size(costMat)
     colNum ≥ rowNum ||
     throw(ArgumentError("Non-square matrix should have more columns than rows."))
@@ -134,6 +142,14 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
             empty!(minLocations)
             stepNum = step3!(costMat, Zs, minLocations, rowCovered, colCovered, rowSTAR, row2colSTAR, Δrow, Δcol, rowCoveredIdx, colCoveredIdx, rowUncoveredIdx, colUncoveredIdx)
         end
+    end
+
+    # if need be, postprocess the result matrix to add the removed rows/columns
+    for rowIndex in unmatchableRows
+        Zs = vcat(Zs[1:rowIndex-1, :], zeros(size(Zs, 2)), Zs[rowIndex:end, :])
+    end
+    for colIndex in unmatchableCols
+        Zs = hcat(Zs[:, 1:colIndex-1], zeros(size(Zs, 1)), Zs[:, colIndex:end])
     end
 
     return Zs
