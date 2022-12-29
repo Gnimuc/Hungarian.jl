@@ -101,6 +101,24 @@ julia> [findfirst(matching[:,i].==Hungarian.STAR) for i = 1:5]
  4
 ```
 
+If a job-worker assignment is not possible, use the special `missing` value to indicate which pairs are disallowed:
+
+```julia
+julia> using Hungarian
+
+julia> weights = [missing 1 1; 1 0 1; 1 1 0]
+3×3 Matrix{Union{Missing, Int64}}:
+  missing  1  1
+ 1         0  1
+ 1         1  0
+
+julia> matching = Hungarian.munkres(weights)
+3×3 SparseArrays.SparseMatrixCSC{Int8, Int64} with 6 stored entries:
+ ⋅  2  1
+ 2  1  ⋅
+ 1  ⋅  2
+```
+
 > **Note**
 > If some jobs or workers cannot be assigned to any worker or job, respectively, i.e. if some rows or columns only have infinite values (`typemax(T)` where `T` is the type of the elements of the cost matrix), the matrix returned by `Hungarian.munkres` will have zeroes for these rows and columns.
 
