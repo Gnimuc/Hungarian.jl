@@ -39,7 +39,22 @@ julia> assignment, cost = hungarian(weights)
 ```
 Since each worker can perform only one task and each task can be assigned to only one worker, those `0`s in the `assignment` mean that no task is assigned to those workers.
 
-# Usage
+If a job-worker assignment is not possible, use the special `missing` value to indicate which pairs are disallowed:
+
+```julia
+julia> using Hungarian
+
+julia> weights = [missing 1 1; 1 0 1; 1 1 0]
+3×3 Matrix{Union{Missing, Int64}}:
+  missing  1  1
+ 1         0  1
+ 1         1  0
+
+julia> assignment, cost = hungarian(weights)
+([2, 1, 3], 2)
+```
+
+## Usage
 When solving a canonical assignment problem, namely, the cost matrix is square, one can directly get the matching via `Hungarian.munkres(x)` instead of `hungarian(x)`:
 ```julia
 julia> using Hungarian
