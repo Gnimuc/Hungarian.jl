@@ -31,6 +31,9 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
     colNum ≥ rowNum ||
     throw(ArgumentError("Non-square matrix should have more columns than rows."))
 
+    # Inf values can cause infinite loop, so we replace them with the largest finite value `prevfloat(typemax(T))`.
+    inf2finite!(costMat)
+
     # preliminaries:
     # "no lines are covered;"
     rowCovered = falses(rowNum)
@@ -138,6 +141,13 @@ function munkres(costMat::AbstractMatrix{T}) where {T<:Real}
 
     return Zs
 end
+
+function inf2finite!(costMat::AbstractMatrix{T}) where {T<:AbstractFloat}
+    for i in eachindex(costMat)
+        @inbounds costMat[i] = ifelse(isinf(costMat[i]), prevfloat(typemax(T)), costMat[i])
+    end
+end
+inf2finite!(costMat::AbstractMatrix{T}) where {T<:Real} = nothing
 
 function munkres(costMat::AbstractMatrix{S}) where {T<:Real,S<:Union{Missing,T}}
     # replace forbidden edges (i.e. those with a missing cost) by a very large cost, so that they
