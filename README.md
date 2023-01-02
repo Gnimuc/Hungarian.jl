@@ -30,7 +30,7 @@ We can solve the assignment problem by:
 julia> using Hungarian
 
 julia> assignment, cost = hungarian(weights)
-([2,1,0,0,3],8)
+([2, 1, 0, 0, 3], 8)
 
 # worker 1 => task 2 with weights[1,2] = 1
 # worker 2 => task 1 with weights[2,1] = 5
@@ -60,41 +60,57 @@ When solving a canonical assignment problem, namely, the cost matrix is square, 
 julia> using Hungarian
 
 julia> matching = Hungarian.munkres(rand(5,5))
-5×5 SparseArrays.SparseMatrixCSC{Int8,Int64} with 7 stored entries:
-  [1, 1]  =  1
-  [5, 1]  =  2
-  [1, 2]  =  2
-  [2, 3]  =  2
-  [2, 4]  =  1
-  [3, 4]  =  2
-  [4, 5]  =  2
+5×5 SparseArrays.SparseMatrixCSC{Int8, Int64} with 9 stored entries:
+ 1  2  ⋅  ⋅  ⋅
+ ⋅  ⋅  1  ⋅  2
+ 2  ⋅  ⋅  ⋅  ⋅
+ 1  ⋅  2  ⋅  ⋅
+ ⋅  ⋅  ⋅  2  1
 
 # 0 => non-zero
 # 1 => zero
 # 2 => STAR
 julia> Matrix(matching)
-5×5 Array{Int8,2}:
+5×5 Matrix{Int8}:
  1  2  0  0  0
- 0  0  2  1  0
- 0  0  0  2  0
- 0  0  0  0  2
+ 0  0  1  0  2
  2  0  0  0  0
+ 1  0  2  0  0
+ 0  0  0  2  1
 
 julia> [findfirst(matching[i,:].==Hungarian.STAR) for i = 1:5]
-5-element Array{Int64,1}:
+5-element Vector{Int64}:
  2
- 3
- 4
  5
  1
+ 3
+ 4
 
 julia> [findfirst(matching[:,i].==Hungarian.STAR) for i = 1:5]
-5-element Array{Int64,1}:
- 5
- 1
- 2
+5-element Vector{Int64}:
  3
+ 1
  4
+ 5
+ 2
+```
+
+If a job-worker assignment is not possible, use the special `missing` value to indicate which pairs are disallowed:
+
+```julia
+julia> using Hungarian
+
+julia> weights = [missing 1 1; 1 0 1; 1 1 0]
+3×3 Matrix{Union{Missing, Int64}}:
+  missing  1  1
+ 1         0  1
+ 1         1  0
+
+julia> matching = Hungarian.munkres(weights)
+3×3 SparseArrays.SparseMatrixCSC{Int8, Int64} with 6 stored entries:
+ ⋅  2  1
+ 2  1  ⋅
+ 1  ⋅  2
 ```
 
 ## References
