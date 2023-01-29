@@ -54,7 +54,7 @@ julia> assignment, cost = hungarian(weights)
 ([2, 1, 3], 2)
 ```
 
-**Note: This package does not support `Inf` weights. All `Inf`s are converted to `prevfloat(typemax(T))` before running the munkres algorithm. **
+__NOTE: This package does not support `Inf` weights. All `Inf`s are converted to `prevfloat(typemax(T))` before running the munkres algorithm.__
 
 ## Usage
 When solving a canonical assignment problem, namely, the cost matrix is square, one can directly get the matching via `Hungarian.munkres(x)` instead of `hungarian(x)`:
